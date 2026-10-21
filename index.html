@@ -1148,6 +1148,56 @@
   #quest-root .phrase-item .ph-text:hover{ color:var(--teal); }
   #quest-root .phrase-item .ph-x{ background:none; border:none; color:var(--text-dim); cursor:pointer; font-size:12px; }
 
+  #quest-root .daily-board{ display:flex; flex-direction:column; gap:8px; }
+  #quest-root .daily-goal{ display:flex; align-items:center; gap:10px; background:var(--ink-2); border:1px solid var(--line); border-radius:9px; padding:10px 12px; }
+  #quest-root .daily-goal.done{ border-color:var(--teal); }
+  #quest-root .dg-check{ width:18px; height:18px; border-radius:5px; border:1.5px solid var(--line); display:flex; align-items:center; justify-content:center; font-size:11px; color:var(--ink); flex-shrink:0; }
+  #quest-root .daily-goal.done .dg-check{ background:var(--teal); border-color:var(--teal); }
+  #quest-root .dg-label{ flex:1; font-size:13px; }
+  #quest-root .daily-goal.done .dg-label{ color:var(--text-dim); text-decoration:line-through; }
+  #quest-root .dg-prog{ font-family:'JetBrains Mono',monospace; font-size:10.5px; color:var(--amber); white-space:nowrap; }
+  #quest-root .dg-foot{ margin:2px 0 0; font-size:11.5px; color:var(--text-dim); }
+  #quest-root .trophy-grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(104px, 1fr)); gap:8px; }
+  #quest-root .trophy{ background:var(--ink); border:1px solid var(--line); border-radius:9px; padding:9px 6px; text-align:center; opacity:.55; }
+  #quest-root .trophy.on{ opacity:1; border-color:var(--amber); }
+  #quest-root .trophy .tr-icon{ font-size:22px; display:block; }
+  #quest-root .trophy .tr-name{ font-size:11px; font-weight:600; display:block; margin-top:3px; }
+  #quest-root .trophy .tr-desc{ font-size:9.5px; color:var(--text-dim); display:block; margin-top:2px; line-height:1.3; }
+
+  #quest-root .pz-area{ min-height:46px; display:flex; flex-wrap:wrap; gap:6px; padding:8px; background:var(--ink); border:1px dashed var(--line); border-radius:9px; margin:10px 0; }
+  #quest-root .pz-area.bad{ border-color:var(--red); animation:pz-shake .3s; }
+  @keyframes pz-shake{ 25%{ transform:translateX(-4px); } 75%{ transform:translateX(4px); } }
+  #quest-root .pz-bank{ display:flex; flex-wrap:wrap; gap:6px; margin-bottom:12px; }
+  #quest-root .pz-chip{ background:var(--ink-2); border:1px solid var(--teal); color:var(--parchment); border-radius:8px; padding:6px 10px; font-size:14px; cursor:pointer; font-family:inherit; }
+  #quest-root .pz-chip:hover{ background:rgba(73,198,182,.15); }
+  #quest-root .pz-btns{ display:flex; flex-wrap:wrap; gap:8px; }
+  #quest-root .speak-btn{ background:none; border:none; cursor:pointer; font-size:11.5px; margin-left:8px; opacity:.7; padding:0; color:var(--teal); font-family:inherit; }
+  #quest-root .speak-btn:hover:not(:disabled){ opacity:1; }
+
+  #quest-root .lb-row{ display:flex; align-items:center; gap:10px; background:var(--ink-2); border:1px solid var(--line); border-radius:9px; padding:8px 12px; margin-bottom:6px; font-size:13px; }
+  #quest-root .lb-row.you{ border-color:var(--amber); background:rgba(242,165,60,.1); }
+  #quest-root .lb-rank{ width:26px; font-family:'JetBrains Mono',monospace; color:var(--text-dim); font-size:12px; }
+  #quest-root .lb-av{ font-size:18px; }
+  #quest-root .lb-name{ flex:1; font-weight:600; }
+  #quest-root .lb-streak{ font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--text-dim); }
+  #quest-root .lb-xp{ font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--amber); min-width:64px; text-align:right; }
+  #quest-root .lb-note{ font-size:11px; color:var(--text-dim); margin:4px 0 0; }
+  #quest-root .qb-text{ width:100%; min-height:240px; background:var(--ink); border:1px solid var(--line); border-radius:8px; color:var(--parchment); font-family:'JetBrains Mono',monospace; font-size:11.5px; padding:10px; resize:vertical; }
+  #quest-root .qb-err{ color:var(--red); font-size:12px; margin:8px 0 0; line-height:1.5; }
+  #quest-root .qb-ok{ color:var(--teal); font-size:12px; margin:8px 0 0; }
+
+  #quest-root .obj-strip{ display:none; background:var(--ink-2); border-bottom:1px solid var(--line); }
+  #quest-root .obj-strip-head{ width:100%; display:flex; align-items:center; gap:8px; background:none; border:none; color:var(--parchment); padding:8px 14px; font-size:12.5px; font-family:inherit; cursor:pointer; text-align:left; }
+  #quest-root .obj-strip-head .os-count{ font-family:'JetBrains Mono',monospace; color:var(--amber); }
+  #quest-root .obj-strip-head .os-dots{ flex:1; display:flex; gap:5px; }
+  #quest-root .os-dot{ width:9px; height:9px; border-radius:50%; border:1.5px solid var(--line); }
+  #quest-root .os-dot.done{ background:var(--teal); border-color:var(--teal); }
+  #quest-root .obj-strip-body{ display:none; padding:2px 14px 10px; }
+  #quest-root .obj-strip.open .obj-strip-body{ display:block; }
+  #quest-root .os-item{ display:flex; gap:8px; font-size:12.5px; padding:3px 0; color:var(--text-dim); }
+  #quest-root .os-item.done{ color:var(--parchment); }
+  @media (max-width:640px){ #quest-root.kb-open .obj-strip{ display:block; } }
+
   /* ---------- Loading spinner + retry ---------- */
   @keyframes lq-spin{ to{ transform:rotate(360deg); } }
   #quest-root .spinner{ display:inline-block; width:13px; height:13px; border:2px solid var(--line); border-top-color:var(--teal); border-radius:50%; animation:lq-spin .8s linear infinite; vertical-align:-2px; margin-right:7px; flex-shrink:0; }
@@ -1155,6 +1205,32 @@
   #quest-root .retry-btn{ background:var(--ink); border:1px solid var(--amber); color:var(--amber); border-radius:99px; padding:5px 13px; font-size:12px; font-weight:600; cursor:pointer; margin-left:8px; font-family:inherit; }
   #quest-root .retry-btn:hover{ background:var(--amber); color:var(--ink); }
   #quest-root .msg.system.has-retry{ text-transform:none; display:flex; align-items:center; flex-wrap:wrap; justify-content:center; }
+
+  #quest-root .acc{ border:1px solid var(--line); border-radius:9px; background:var(--ink); overflow:hidden; }
+  #quest-root .acc-head{ width:100%; display:flex; align-items:center; gap:8px; background:none; border:none; color:var(--parchment); padding:9px 11px; font-size:12.5px; font-weight:600; font-family:inherit; cursor:pointer; text-align:left; }
+  #quest-root .acc-head:hover{ background:rgba(255,255,255,.03); }
+  #quest-root .acc-title{ flex:1; }
+  #quest-root .acc-badge{ font-family:'JetBrains Mono',monospace; font-size:10.5px; color:var(--ink); background:var(--amber); border-radius:99px; padding:1px 7px; }
+  #quest-root .acc-badge:empty{ display:none; }
+  #quest-root .acc-caret{ color:var(--text-dim); transition:transform .15s ease; }
+  #quest-root .acc.open .acc-caret{ transform:rotate(180deg); }
+  #quest-root .acc-body{ display:none; padding:2px 11px 12px; flex-direction:column; gap:16px; }
+  #quest-root .acc.open .acc-body{ display:flex; }
+
+  /* ---------- Fluid height: fill the window instead of fixed max-heights ---------- */
+  #quest-root{ height:var(--vvh,100dvh); min-height:0; max-width:1100px; margin:0 auto; }
+  #quest-root > #onboarding-screen:not(.hidden),
+  #quest-root > #home-screen:not(.hidden),
+  #quest-root > #app-screen:not(.hidden),
+  #quest-root > #lesson-screen:not(.hidden){ flex:1; min-height:0; }
+  #onboarding-screen{ overflow-y:auto; }
+  #home-screen{ max-height:none; overflow-y:auto; }
+  #app-screen:not(.hidden), #lesson-screen:not(.hidden){ display:flex; flex-direction:column; }
+  #app-screen .body{ flex:1; min-height:0; grid-template-rows:minmax(0,1fr); }
+  #quest-root .chat-col{ min-height:0; max-height:none; height:100%; }
+  #quest-root .log{ min-height:0; }
+  #quest-root .objectives{ min-height:0; max-height:none; }
+  #lesson-screen .lesson-body{ max-height:none; flex:1; min-height:0; }
 
   /* ---------- Mobile: keyboard-aware layout (dvh / visualViewport) ---------- */
   @media (max-width:640px){
@@ -1261,6 +1337,16 @@
     </div>
 
     <div>
+      <p class="section-label">🎯 Daily Challenges</p>
+      <div id="daily-board"></div>
+    </div>
+
+    <div>
+      <p class="section-label">🏅 Leaderboard</p>
+      <div id="leaderboard"></div>
+    </div>
+
+    <div>
       <p class="section-label">Today's Quests</p>
       <div class="daily-row" id="daily-row"></div>
     </div>
@@ -1279,6 +1365,15 @@
     <div>
       <p class="section-label">📚 Word Review</p>
       <div id="review-card-slot"></div>
+    </div>
+
+    <div>
+      <p class="section-label">🛠 Quest Builder</p>
+      <div class="review-card" id="builder-card">
+        <p class="qc-title">Write your own quest</p>
+        <p class="qc-scenario">Create a custom scenario (NPC, situation, objectives) as JSON and test it right here.</p>
+        <div class="qc-footer"><span class="qc-xp"></span><span class="qc-action">Open builder →</span></div>
+      </div>
     </div>
   </div>
 
@@ -1346,6 +1441,7 @@
 
     <div class="body">
       <div class="chat-col">
+        <div class="obj-strip" id="obj-strip"><button type="button" class="obj-strip-head" id="obj-strip-head"></button><div class="obj-strip-body" id="obj-strip-body"></div></div>
         <div class="log" id="log"></div>
         <div class="speed-timer-wrap hidden" id="speed-timer-wrap">
           <div class="speed-timer-track"><div class="speed-timer-bar" id="speed-timer-bar"></div></div>
@@ -1785,6 +1881,467 @@ Respond ONLY with one JSON object, no markdown fences:
     return word.toLowerCase().trim().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
   }
 
+  // ---------- Achievements + daily challenges ----------
+  const BADGES = [
+    { id: 'first_quest', icon: '🌱', title: 'First Steps', desc: 'Complete your first quest', test: () => (stats.quests || 0) >= 1 },
+    { id: 'streak5', icon: '🔥', title: '5-Day Streak', desc: 'Keep a 5-day streak', test: () => streakDays >= 5 },
+    { id: 'speed', icon: '⚡', title: 'Speed Demon', desc: 'Finish a quest in Speed Mode', test: () => (stats.speed || 0) >= 1 },
+    { id: 'collector', icon: '📚', title: 'Word Collector', desc: 'Save 10 words', test: () => savedWords.length >= 10 },
+    { id: 'master20', icon: '🏅', title: 'Mastered 20 Words', desc: 'Get 20 words to box 4 or higher', test: () => savedWords.filter(w => w.box >= 4).length >= 20 },
+    { id: 'grammar3', icon: '📘', title: 'Grammar Guru', desc: 'Complete 3 grammar lessons', test: () => (stats.lessons || 0) >= 3 },
+    { id: 'sharp', icon: '🎯', title: 'Sharp Tongue', desc: 'Finish 3 quests at 90%+ accuracy', test: () => (stats.sharp || 0) >= 3 },
+    { id: 'phrases3', icon: '⭐', title: 'Phrase Hunter', desc: 'Save 3 correction phrases', test: () => (stats.phrases || 0) >= 3 },
+    { id: 'reviewer', icon: '🔁', title: 'Reviewer', desc: 'Finish a review quest', test: () => (stats.reviews || 0) >= 1 },
+    { id: 'daily', icon: '🏆', title: 'Daily Champion', desc: 'Clear a full daily board', test: () => (stats.dailyClears || 0) >= 1 }
+  ];
+
+  const DAILY_POOL = [
+    { id: 'lookup2', label: 'Look up 2 words in the dictionary', stat: 'lookups', target: 2 },
+    { id: 'quest1', label: 'Complete 1 quest', stat: 'quests', target: 1 },
+    { id: 'lesson1', label: 'Complete 1 grammar lesson', stat: 'lessons', target: 1 },
+    { id: 'phrase1', label: 'Save 1 phrase from a correction hint', stat: 'phrases', target: 1 },
+    { id: 'quest2', label: 'Complete 2 quests', stat: 'quests', target: 2 },
+    { id: 'lookup4', label: 'Look up 4 words in the dictionary', stat: 'lookups', target: 4 }
+  ];
+  const DAILY_REWARD_XP = 5;
+  const DAILY_BONUS_XP = 10;
+
+  function todaysGoals(){
+    const d = new Date();
+    const seed = d.getFullYear() * 372 + (d.getMonth() + 1) * 31 + d.getDate();
+    return [0, 2, 4].map(i => DAILY_POOL[(seed + i) % DAILY_POOL.length]);
+  }
+
+  function ensureDaily(){
+    const today = dayStr(new Date());
+    if(!daily || daily.date !== today) daily = { date: today, progress: {}, claimed: {} };
+  }
+
+  function bumpStat(key, n){
+    n = n || 1;
+    stats[key] = (stats[key] || 0) + n;
+    ensureDaily();
+    daily.progress[key] = (daily.progress[key] || 0) + n;
+    settleDaily();
+    checkBadges();
+  }
+
+  function settleDaily(){
+    const goals = todaysGoals();
+    goals.forEach(g => {
+      if(!daily.claimed[g.id] && (daily.progress[g.stat] || 0) >= g.target){
+        daily.claimed[g.id] = true;
+        totalXP += DAILY_REWARD_XP;
+        showToast('🎯 Challenge done! +' + DAILY_REWARD_XP + ' XP');
+      }
+    });
+    if(!daily.claimed.__all && goals.every(g => daily.claimed[g.id])){
+      daily.claimed.__all = true;
+      totalXP += DAILY_BONUS_XP;
+      stats.dailyClears = (stats.dailyClears || 0) + 1;
+      showToast('🏆 Daily board cleared! +' + DAILY_BONUS_XP + ' bonus XP');
+    }
+  }
+
+  function checkBadges(){
+    BADGES.forEach(b => {
+      if(!unlockedBadges[b.id] && b.test()){
+        unlockedBadges[b.id] = Date.now();
+        showToast(b.icon + ' Badge unlocked: ' + b.title);
+      }
+    });
+  }
+
+  function renderDailyBoard(){
+    const box = document.getElementById('daily-board');
+    if(!box) return;
+    ensureDaily();
+    let html = '<div class="daily-board">';
+    todaysGoals().forEach(g => {
+      const p = Math.min(g.target, daily.progress[g.stat] || 0);
+      const done = !!daily.claimed[g.id];
+      html += '<div class="daily-goal' + (done ? ' done' : '') + '"><span class="dg-check">' + (done ? '✓' : '') + '</span><span class="dg-label">' + escapeHtml(g.label) + '</span><span class="dg-prog">' + p + '/' + g.target + ' · +' + DAILY_REWARD_XP + ' XP</span></div>';
+    });
+    html += '<p class="dg-foot">Clear all three for +' + DAILY_BONUS_XP + ' bonus XP' + (daily.claimed.__all ? ' — done today! 🏆' : '') + '</p></div>';
+    box.innerHTML = html;
+  }
+
+  function trophyHTML(){
+    const n = BADGES.filter(b => unlockedBadges[b.id]).length;
+    let h = '<p class="shop-section-label">🏆 Trophy Room · ' + n + '/' + BADGES.length + '</p><div class="trophy-grid">';
+    BADGES.forEach(b => {
+      const on = !!unlockedBadges[b.id];
+      h += '<div class="trophy' + (on ? ' on' : '') + '"><span class="tr-icon">' + (on ? b.icon : '🔒') + '</span><span class="tr-name">' + escapeHtml(b.title) + '</span><span class="tr-desc">' + escapeHtml(b.desc) + '</span></div>';
+    });
+    return h + '</div>';
+  }
+
+  // ---------- Mobile objectives strip (replaces the sidebar while the keyboard is open) ----------
+  let objStripOpen = false;
+
+  function renderObjStrip(){
+    const strip = document.getElementById('obj-strip');
+    if(!strip || !currentQuestDef) return;
+    const defs = currentQuestDef.objectives;
+    const done = defs.filter(o => objState[o.id]).length;
+    strip.classList.toggle('open', objStripOpen);
+    document.getElementById('obj-strip-head').innerHTML =
+      '<span>🎯</span><span class="os-count">' + done + '/' + defs.length + '</span><span class="os-dots">' +
+      defs.map(o => '<span class="os-dot' + (objState[o.id] ? ' done' : '') + '"></span>').join('') +
+      '</span><span>' + (objStripOpen ? '▴' : '▾') + '</span>';
+    document.getElementById('obj-strip-body').innerHTML = defs.map(o =>
+      '<div class="os-item' + (objState[o.id] ? ' done' : '') + '"><span>' + (objState[o.id] ? '✓' : '○') + '</span><span>' + escapeHtml(o.label) + '</span></div>'
+    ).join('');
+  }
+
+  document.getElementById('obj-strip-head').addEventListener('click', () => {
+    objStripOpen = !objStripOpen;
+    renderObjStrip();
+  });
+
+  // ---------- Leaderboard (demo rivals; real rankings need a server) ----------
+  const RIVALS = [
+    { name: 'Mika', emoji: '🐼', rate: 1.6 },
+    { name: 'Leo', emoji: '🦁', rate: 1.2 },
+    { name: 'Sofia', emoji: '🦉', rate: 0.9 },
+    { name: 'Kenji', emoji: '🐙', rate: 0.7 },
+    { name: 'Ana', emoji: '🦋', rate: 0.5 },
+    { name: 'Tom', emoji: '🐢', rate: 0.3 }
+  ];
+
+  function renderLeaderboard(){
+    const box = document.getElementById('leaderboard');
+    if(!box) return;
+    const days = Math.max(0, Math.floor((Date.now() - Date.UTC(2026, 0, 1)) / 864e5));
+    const me = (AVATAR_OPTIONS.find(a => a.id === selectedAvatar) || AVATAR_OPTIONS[0]).emoji;
+    const rows = RIVALS.map(r => ({ name: r.name, emoji: r.emoji, xp: Math.round(r.rate * days), streak: 1 + ((days * 7 + r.name.length * 3) % 12), you: false }));
+    rows.push({ name: 'You', emoji: me, xp: totalXP, streak: streakDays, you: true });
+    rows.sort((a, b) => b.xp - a.xp);
+    const medals = ['🥇', '🥈', '🥉'];
+    box.innerHTML = rows.map((r, i) =>
+      '<div class="lb-row' + (r.you ? ' you' : '') + '"><span class="lb-rank">' + (medals[i] || '#' + (i + 1)) + '</span><span class="lb-av">' + r.emoji + '</span><span class="lb-name">' + escapeHtml(r.name) + '</span><span class="lb-streak">🔥 ' + r.streak + '</span><span class="lb-xp">' + r.xp + ' XP</span></div>'
+    ).join('') + '<p class="lb-note">Sample players for fun — real online rankings need a server.</p>';
+  }
+
+  // ---------- Quest Builder (custom scenarios) ----------
+  const QB_TEMPLATE = JSON.stringify({
+    level: 'beginner',
+    title: 'Returning a Jacket',
+    summary: 'Return a jacket and ask for a refund.',
+    npcName: 'Store Clerk Jo',
+    persona: 'Jo is polite but follows the store rules strictly.',
+    scenario: 'The learner wants to return a jacket without a receipt.',
+    intro: 'You are at the returns desk. Explain what you want to do.',
+    objectives: [
+      { id: 'explain', label: 'Explain that you want to return the jacket', trigger: 'The learner said they want to return or get a refund for the jacket.' },
+      { id: 'solution', label: 'Agree on a solution (refund, exchange or credit)', trigger: 'The learner and Jo agreed on a refund, exchange or store credit.' }
+    ]
+  }, null, 2);
+  let qbDraft = QB_TEMPLATE;
+
+  function unregisterQuest(id){
+    delete QUEST_DEFINITIONS[id];
+    const i = QUEST_CATALOG.findIndex(x => x.id === id);
+    if(i >= 0) QUEST_CATALOG.splice(i, 1);
+  }
+
+  function registerCustom(q, id){
+    unregisterQuest(id);
+    registerQuest(Object.assign({}, q, { id: id, title: '✎ ' + q.title }));
+  }
+
+  function validateQuestJSON(q){
+    if(!q || typeof q !== 'object' || Array.isArray(q)) return ['The JSON must be an object.'];
+    const errs = [];
+    const need = (k, max) => {
+      if(typeof q[k] !== 'string' || !q[k].trim()) errs.push('"' + k + '" is required.');
+      else if(q[k].length > max) errs.push('"' + k + '" is too long (max ' + max + ' characters).');
+    };
+    need('title', 60); need('summary', 140); need('npcName', 40); need('persona', 400); need('scenario', 400); need('intro', 400);
+    if(!LEVEL_ORDER.includes(q.level)) errs.push('"level" must be beginner, intermediate or advanced.');
+    if(!Array.isArray(q.objectives) || !q.objectives.length){
+      errs.push('"objectives" needs 1 to 5 items.');
+    } else {
+      if(q.objectives.length > 5) errs.push('Use at most 5 objectives.');
+      const ids = new Set();
+      q.objectives.forEach((o, i) => {
+        const n = 'Objective ' + (i + 1) + ': ';
+        if(!o || !/^[A-Za-z][A-Za-z0-9_]{0,24}$/.test(o.id || '')) errs.push(n + '"id" must be letters, numbers or underscore and start with a letter.');
+        else if(ids.has(o.id)) errs.push(n + 'duplicate id "' + o.id + '".');
+        else ids.add(o.id);
+        if(!o || typeof o.label !== 'string' || !o.label.trim()) errs.push(n + '"label" is required.');
+        if(!o || typeof o.trigger !== 'string' || !o.trigger.trim()) errs.push(n + '"trigger" is required.');
+      });
+    }
+    return errs;
+  }
+
+  function parseDraft(ov){
+    const msg = ov.querySelector('#qb-msg');
+    let q;
+    try { q = JSON.parse(ov.querySelector('#qb-text').value); }
+    catch(e){ msg.className = 'qb-err'; msg.textContent = 'Invalid JSON: ' + e.message; return null; }
+    const errs = validateQuestJSON(q);
+    if(errs.length){ msg.className = 'qb-err'; msg.innerHTML = errs.map(escapeHtml).join('<br>'); return null; }
+    return q;
+  }
+
+  function renderQbList(ov){
+    const box = ov.querySelector('#qb-list');
+    box.innerHTML = '';
+    if(!customQuests.length){
+      box.innerHTML = '<p class="modal-loading">Nothing saved yet.</p>';
+      return;
+    }
+    customQuests.forEach(c => {
+      const row = document.createElement('div');
+      row.className = 'word-list-item';
+      row.innerHTML = '<div class="wl-info"><div class="wl-word"></div><div class="wl-def"></div></div><button type="button" class="retry-btn" data-a="play">▶ Play</button><button type="button" class="ph-x" data-a="del" title="Delete" style="background:none;border:none;color:var(--text-dim);cursor:pointer;margin-left:6px;">✕</button>';
+      row.querySelector('.wl-word').textContent = c.title;
+      row.querySelector('.wl-def').textContent = LEVEL_LABELS[c.level] + ' · ' + c.summary;
+      row.querySelector('[data-a=play]').addEventListener('click', () => { ov.classList.remove('show'); openQuest(c.id); });
+      row.querySelector('[data-a=del]').addEventListener('click', () => {
+        customQuests = customQuests.filter(x => x.id !== c.id);
+        unregisterQuest(c.id);
+        saveProgress();
+        renderQuestGrid();
+        renderQbList(ov);
+      });
+      box.appendChild(row);
+    });
+  }
+
+  function drawBuilder(ov){
+    ov.innerHTML = '<div class="modal-card" style="max-width:520px;"><button class="modal-close" id="qb-close">✕</button>' +
+      '<p class="modal-word" style="font-size:19px;">Quest Builder</p>' +
+      '<p class="modal-pos" style="text-transform:none;">Write a scenario as JSON, test it, then save it to your quests.</p>' +
+      '<textarea id="qb-text" class="qb-text" spellcheck="false"></textarea>' +
+      '<p id="qb-msg" class="qb-ok"></p>' +
+      '<div class="pz-btns" style="margin-top:10px;" id="qb-btns"></div>' +
+      '<p class="shop-section-label" style="margin-top:16px;">My quests</p><div id="qb-list"></div></div>';
+    const ta = ov.querySelector('#qb-text');
+    ta.value = qbDraft;
+    ta.addEventListener('input', () => { qbDraft = ta.value; });
+    ov.querySelector('#qb-close').addEventListener('click', () => ov.classList.remove('show'));
+    const btns = ov.querySelector('#qb-btns');
+    const add = (label, fn, cls) => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = cls || 'retry-btn';
+      b.style.marginLeft = '0';
+      b.textContent = label;
+      b.addEventListener('click', fn);
+      btns.appendChild(b);
+    };
+    add('▶ Test play', () => {
+      const q = parseDraft(ov);
+      if(!q) return;
+      registerCustom(q, 'c-test');
+      ov.classList.remove('show');
+      openQuest('c-test');
+      const i = QUEST_CATALOG.findIndex(x => x.id === 'c-test');
+      if(i >= 0) QUEST_CATALOG.splice(i, 1);
+    }, 'continue-btn');
+    add('💾 Save to my quests', () => {
+      const q = parseDraft(ov);
+      if(!q) return;
+      const id = 'c-' + (wordSlug(q.title) || String(Date.now()));
+      const msg = ov.querySelector('#qb-msg');
+      if(id === 'c-test' || (!customQuests.some(c => c.id === id) && customQuests.length >= 20)){
+        msg.className = 'qb-err';
+        msg.textContent = 'Choose a different title (or delete a saved quest first - the limit is 20).';
+        return;
+      }
+      const clean = {
+        id: id, level: q.level, title: q.title, summary: q.summary,
+        skills: Array.isArray(q.skills) ? q.skills.filter(s => typeof s === 'string').slice(0, 5) : [],
+        npcName: q.npcName, persona: q.persona, scenario: q.scenario, intro: q.intro,
+        objectives: q.objectives.map(o => ({ id: o.id, label: o.label, trigger: o.trigger })),
+        extraGuidance: typeof q.extraGuidance === 'string' ? q.extraGuidance.slice(0, 400) : ''
+      };
+      customQuests = customQuests.filter(c => c.id !== id);
+      customQuests.push(clean);
+      registerCustom(clean, id);
+      saveProgress();
+      renderQuestGrid();
+      renderQbList(ov);
+      msg.className = 'qb-ok';
+      msg.textContent = 'Saved! Find it under All Quests (' + LEVEL_LABELS[q.level] + ').';
+    });
+    add('Reset template', () => { qbDraft = QB_TEMPLATE; ta.value = qbDraft; ov.querySelector('#qb-msg').textContent = ''; });
+    renderQbList(ov);
+  }
+
+  function openBuilder(){
+    let ov = document.getElementById('builder-overlay');
+    if(!ov){
+      ov = document.createElement('div');
+      ov.id = 'builder-overlay';
+      ov.className = 'modal-overlay';
+      document.getElementById('quest-root').appendChild(ov);
+    }
+    drawBuilder(ov);
+    ov.classList.add('show');
+  }
+
+  document.getElementById('builder-card').addEventListener('click', openBuilder);
+
+  // ---------- Listen (TTS) + sentence-scramble warm-up ----------
+  const LANG_TAGS = { Spanish: 'es-ES', French: 'fr-FR', German: 'de-DE', Japanese: 'ja-JP', Korean: 'ko-KR', Mandarin: 'zh-CN', English: 'en-US' };
+  const WARMUP_XP = 3;
+  const WARMUP_FALLBACK = {
+    beginner: ['I would like a coffee please', 'Nice to meet you today'],
+    intermediate: ['Could you tell me where the station is', 'I think we should try a different plan'],
+    advanced: ['I would appreciate it if we could revisit the timeline', 'Let me walk you through the main risks']
+  };
+  let warmupOff = false;   // session only: turned off from the warm-up screen, back on after a reload
+
+  function speakText(text){
+    if(!('speechSynthesis' in window)) return;
+    window.speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = LANG_TAGS[profile.language] || 'en-US';
+    u.rate = profile.level === 'beginner' ? 0.8 : 0.95;
+    window.speechSynthesis.speak(u);
+  }
+
+  function makeSpeakButton(text){
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'speak-btn';
+    b.textContent = '🔊 Listen';
+    b.setAttribute('aria-label', 'Listen to this message');
+    if(!('speechSynthesis' in window)){ b.disabled = true; b.title = 'Audio isn’t supported in this browser'; }
+    b.addEventListener('click', () => speakText(text));
+    return b;
+  }
+
+  function warmupThen(q, go){
+    if(warmupOff){ go(); return; }
+    openWarmup(q, go);
+  }
+
+  function shuffled(arr){
+    let a = arr.slice();
+    for(let tries = 0; tries < 6; tries++){
+      a = arr.slice();
+      for(let i = a.length - 1; i > 0; i--){
+        const j = Math.floor(Math.random() * (i + 1));
+        const tmp = a[i]; a[i] = a[j]; a[j] = tmp;
+      }
+      if(a.map(o => o.t).join('|') !== arr.map(o => o.t).join('|')) break;
+    }
+    return a;
+  }
+
+  function openWarmup(q, go){
+    let ov = document.getElementById('warmup-overlay');
+    if(!ov){
+      ov = document.createElement('div');
+      ov.id = 'warmup-overlay';
+      ov.className = 'modal-overlay';
+      ov.innerHTML = '<div class="modal-card"><div id="warmup-body"></div></div>';
+      document.getElementById('quest-root').appendChild(ov);
+    }
+    const body = document.getElementById('warmup-body');
+    const finish = () => { ov.classList.remove('show'); go(); };
+    ov.classList.add('show');
+    body.innerHTML = '<p class="modal-loading"><span class="spinner"></span>Preparing a warm-up…</p>';
+
+    const lang = profile.language || 'English';
+    const system = `You create sentence-scramble warm-ups for a language-learning app. Write ONE natural sentence in ${lang} that a learner could say in this scenario: "${q.title} - ${q.scenario}". ${LEVEL_GUIDE[profile.level] || LEVEL_GUIDE.beginner} Use 4 to 9 words. Respond ONLY with JSON, no markdown fences: {"sentence": "<the sentence>", "meaning": "<English translation>"}`;
+
+    callClaudeJSON(system, [{ role: 'user', content: 'Create the warm-up sentence.' }])
+      .catch(() => null)
+      .then(r => {
+        let sentence = (r && typeof r.sentence === 'string') ? r.sentence.trim() : '';
+        let meaning = (r && typeof r.meaning === 'string') ? r.meaning : '';
+        if(!sentence){
+          const bank = WARMUP_FALLBACK[profile.level] || WARMUP_FALLBACK.beginner;
+          sentence = bank[Math.floor(Math.random() * bank.length)];
+          meaning = '';
+        }
+        renderPuzzle(body, q.title, sentence, meaning, finish);
+      });
+  }
+
+  function renderPuzzle(body, title, sentence, meaning, finish){
+    const spaced = /\s/.test(sentence);
+    const tokens = spaced ? sentence.split(/\s+/) : Array.from(sentence);
+    if(tokens.length < 2){ finish(); return; }
+    const sep = spaced ? ' ' : '';
+    const target = tokens.join(sep);
+    const all = tokens.map((t, i) => ({ t: t, i: i }));
+    let bank = shuffled(all);
+    let placed = [];
+    let fails = 0, solved = false, bad = false, lastMsg = '';
+
+    function draw(){
+      body.innerHTML = '<p class="modal-word" style="font-size:18px;">Warm-up</p>' +
+        '<p class="modal-pos" style="text-transform:none;">Before “' + escapeHtml(title) + '”: put the sentence in order</p>' +
+        (meaning ? '<p class="modal-phon">' + escapeHtml(meaning) + '</p>' : '') +
+        '<div class="pz-area" id="pz-area"></div><div class="pz-bank" id="pz-bank"></div>' +
+        '<p class="modal-loading" id="pz-msg"></p><div class="pz-btns" id="pz-btns"></div>';
+      const area = body.querySelector('#pz-area');
+      const bk = body.querySelector('#pz-bank');
+      const btns = body.querySelector('#pz-btns');
+      body.querySelector('#pz-msg').textContent = lastMsg;
+      if(bad){ area.classList.add('bad'); bad = false; }
+
+      const chip = (o, fromBank) => {
+        const c = document.createElement('button');
+        c.type = 'button';
+        c.className = 'pz-chip';
+        c.textContent = o.t;
+        if(!solved) c.addEventListener('click', () => {
+          const src = fromBank ? bank : placed;
+          const dst = fromBank ? placed : bank;
+          src.splice(src.indexOf(o), 1);
+          dst.push(o);
+          lastMsg = '';
+          draw();
+        });
+        return c;
+      };
+      placed.forEach(o => area.appendChild(chip(o, false)));
+      bank.forEach(o => bk.appendChild(chip(o, true)));
+
+      const btn = (label, fn, cls) => {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = cls || 'retry-btn';
+        b.style.marginLeft = '0';
+        b.textContent = label;
+        b.addEventListener('click', fn);
+        btns.appendChild(b);
+        return b;
+      };
+
+      if(solved){
+        btn('Start quest →', finish, 'continue-btn');
+        return;
+      }
+      const check = btn('Check', () => {
+        if(placed.map(o => o.t).join(sep) === target){
+          solved = true;
+          totalXP += WARMUP_XP;
+          bumpStat('puzzles');
+          lastMsg = '✓ Nice! +' + WARMUP_XP + ' XP';
+        } else {
+          fails += 1;
+          bad = true;
+          lastMsg = 'Not quite — try again.';
+        }
+        draw();
+      }, 'continue-btn');
+      if(bank.length) check.disabled = true;
+      if(fails >= 2) btn('Show answer', () => { placed = all.slice(); bank = []; lastMsg = 'Here is the order — tap Check.'; draw(); });
+      btn('Skip →', finish);
+      btn('Turn warm-ups off', () => { warmupOff = true; finish(); });
+    }
+    draw();
+  }
+
   // ---------- SRS scheduling (Leitner boxes + due dates) ----------
   const DAY_MS = 864e5;
   const SRS_INTERVAL_DAYS = [0, 1, 3, 7, 14, 30];   // gap before the next review, by box 0-5
@@ -1854,6 +2411,10 @@ Respond ONLY with one JSON object, no markdown fences:
   // SAVE_SCHEMA_VERSION and add a migration for the old number (never edit old steps).
   const SAVE_SCHEMA_VERSION = 3;
   let recastMode = 'auto';
+  let stats = {};
+  let customQuests = [];
+  let unlockedBadges = {};
+  let daily = { date: '', progress: {}, claimed: {} };
   let savedPhrases = [];
   const SAVE_MIGRATIONS = {
     1: s => {
@@ -1931,7 +2492,7 @@ Respond ONLY with one JSON object, no markdown fences:
       if(!profile.name) return;
       localStorage.setItem(SAVE_KEY, JSON.stringify({
         schemaVersion: SAVE_SCHEMA_VERSION,
-        recastMode, savedPhrases,
+        recastMode, savedPhrases, stats, unlockedBadges, daily, customQuests,
         profile, totalXP, streakDays, lastActive, accuracyHistory, savedWords,
         selectedAvatar, selectedTheme, selectedInterests,
         completedQuestIds: [...completedQuestIds],
@@ -1957,6 +2518,11 @@ Respond ONLY with one JSON object, no markdown fences:
       selectedInterests = s.selectedInterests || [];
       recastMode = ['auto', 'gentle', 'standard', 'strict'].includes(s.recastMode) ? s.recastMode : 'auto';
       savedPhrases = Array.isArray(s.savedPhrases) ? s.savedPhrases.filter(p => p && p.better) : [];
+      stats = (s.stats && typeof s.stats === 'object') ? s.stats : {};
+      customQuests = Array.isArray(s.customQuests) ? s.customQuests.filter(q => q && typeof q.id === 'string' && /^c-/.test(q.id) && validateQuestJSON(q).length === 0) : [];
+      customQuests.forEach(q => registerCustom(q, q.id));
+      unlockedBadges = (s.unlockedBadges && typeof s.unlockedBadges === 'object') ? s.unlockedBadges : {};
+      daily = (s.daily && typeof s.daily === 'object' && s.daily.progress && s.daily.claimed) ? s.daily : { date: '', progress: {}, claimed: {} };
       completedQuestIds = new Set(s.completedQuestIds || []);
       completedGrammarIds = new Set(s.completedGrammarIds || []);
       ownedAvatars = new Set(s.ownedAvatars || ['fox']);
@@ -2124,6 +2690,7 @@ Respond ONLY with one JSON object, no markdown fences:
         </div>
       </div>
     `;
+    charModalBody.insertAdjacentHTML('beforeend', trophyHTML());
     charModalOverlay.classList.add('show');
   }
 
@@ -2264,6 +2831,9 @@ Respond ONLY with one JSON object, no markdown fences:
   }
 
   function renderCharSheetTeaser(){
+    renderDailyBoard();
+    renderLeaderboard();
+    checkBadges();
     const playerLevel = getPlayerLevel();
     const title = getPlayerTitle(playerLevel);
     const xpIntoLevel = totalXP % XP_PER_PLAYER_LEVEL;
@@ -2361,7 +2931,7 @@ Respond ONLY with one JSON object, no markdown fences:
     `;
     card.addEventListener('click', () => {
       if(q.playable){
-        openQuest(q.id);
+        warmupThen(q, () => openQuest(q.id));
       } else {
         showToast('This quest is locked for now.');
       }
@@ -2837,7 +3407,7 @@ Respond ONLY with a single JSON object, no markdown fences, no extra text, in ex
     const n = normPhrase(better);
     const i = savedPhrases.findIndex(p => normPhrase(p.better) === n);
     if(i >= 0) savedPhrases.splice(i, 1);
-    else savedPhrases.push({ original: original, better: better, uses: 0, savedAt: Date.now() });
+    else { savedPhrases.push({ original: original, better: better, uses: 0, savedAt: Date.now() }); bumpStat('phrases'); }
     renderPhrasePanel();
   }
 
@@ -2898,6 +3468,46 @@ Respond ONLY with a single JSON object, no markdown fences, no extra text, in ex
     side.insertBefore(phrases, anchor);
     renderRecastChips();
     renderPhrasePanel();
+  })();
+
+  // ---------- Sidebar accordions (declutter the quest sidebar) ----------
+  (function buildSidebarAccordions(){
+    const side = document.querySelector('#app-screen .objectives');
+    if(!side) return;
+    const kids = Array.from(side.children);
+    const byLabel = txt => kids.find(k => {
+      const l = k.querySelector(':scope > .label');
+      return l && l.textContent.indexOf(txt) === 0;
+    });
+    const dict = byLabel('Dictionary');
+    const interests = byLabel('Your Interests');
+    const hints = byLabel('Correction hints');
+    const phrases = byLabel('⭐ My phrases');
+    const xpBlock = side.querySelector('.xp-block');
+    if(!dict || !interests || !hints || !phrases || !xpBlock) return;
+
+    const group = (title, parts) => {
+      const g = document.createElement('div');
+      g.className = 'acc';
+      g.innerHTML = '<button type="button" class="acc-head"><span class="acc-title"></span><span class="acc-badge"></span><span class="acc-caret">▾</span></button><div class="acc-body"></div>';
+      g.querySelector('.acc-title').textContent = title;
+      const body = g.querySelector('.acc-body');
+      parts.forEach(p => body.appendChild(p));
+      const first = parts[0].querySelector(':scope > .label');
+      if(first) first.style.display = 'none';   // the accordion header replaces it
+      g.querySelector('.acc-head').addEventListener('click', () => g.classList.toggle('open'));
+      return g;
+    };
+
+    const g1 = group('📖 Dictionary & interests', [dict, interests]);
+    const g2 = group('💬 Hints & saved phrases', [hints, phrases]);
+    side.insertBefore(g1, xpBlock);
+    side.insertBefore(g2, xpBlock);
+
+    const badge = g2.querySelector('.acc-badge');
+    const updateBadge = () => { badge.textContent = savedPhrases.length ? String(savedPhrases.length) : ''; };
+    new MutationObserver(updateBadge).observe(document.getElementById('phrase-list'), { childList: true });
+    updateBadge();
   })();
 
   // Return to the profile page, prefilled; saving keeps all progress.
@@ -3062,6 +3672,7 @@ Respond ONLY with a single JSON object, no markdown fences, no extra text, in ex
     totalXP += earnedXp;
     touchStreak();
     completedGrammarIds.add(currentLessonTopic.id);
+    bumpStat('lessons');
 
     lessonXpEarnedEl.textContent = earnedXp;
     lessonFeedbackText.textContent = `You got ${lessonScore}/${total} correct!`;
@@ -3136,6 +3747,7 @@ Respond ONLY with a single JSON object, no markdown fences, no extra text, in ex
 
   function renderObjectives(){
     objList.innerHTML = '';
+    renderObjStrip();
     if(!currentQuestDef) return;
     currentQuestDef.objectives.forEach(o => {
       const done = objState[o.id];
@@ -3202,6 +3814,7 @@ Respond ONLY with a single JSON object, no markdown fences, no extra text, in ex
     } else if(role === 'npc'){
       div.className = 'msg npc';
       div.innerHTML = `<span class="npc-name">${opts.npcName || ''}</span>${wrapWords(escapeHtml(text))}`;
+      div.appendChild(makeSpeakButton(text));
     } else {
       div.className = 'msg user';
       let inner = '';
@@ -3350,10 +3963,14 @@ Respond ONLY with a single JSON object, no markdown fences, no extra text, in ex
 
         totalXP += earnedTotal;
         completedQuestIds.add(currentQuestId);
+        bumpStat('quests');
+        if(isSpeedMode) bumpStat('speed');
+        if(isReviewQuest) bumpStat('reviews');
         touchStreak();
 
         const acc = (typeof result.accuracy === 'number' && result.accuracy > 0) ? result.accuracy : 0.75;
         accuracyHistory.push(acc);
+        if(acc >= 0.9) bumpStat('sharp');
         const accPct = Math.round(acc * 100);
 
         let feedbackMsg = (result.feedback || "Nicely done!") + ` (Accuracy: ${accPct}%)`;
@@ -3430,6 +4047,7 @@ Respond ONLY with a single JSON object, no markdown fences, in exactly this shap
         return;
       }
       saveWordForReview(result.word || word, result.definition || '');
+      bumpStat('lookups');
 
       modalBody.innerHTML = `
         <p class="modal-word">${escapeHtml(result.word || word)}</p>
@@ -3501,6 +4119,7 @@ Respond ONLY with a single JSON object, no markdown fences, in exactly this shap
       micBtn.classList.add('recording');
       input.placeholder = 'Listening…';
       try {
+        recognizer.lang = LANG_TAGS[profile.language] || 'en-US';
         recognizer.start();
       } catch(err){
         recording = false;
