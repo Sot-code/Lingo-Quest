@@ -1,3 +1,9 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>LingoQuest</title>
 <style>
   :root{
     --ink:#12141f;
@@ -13,7 +19,7 @@
   * { box-sizing:border-box; }
   #quest-root{
     position:relative;
-    font-family:'Inter',system-ui,sans-serif;
+    font-family:'Inter',system-ui,sans-serif,'Apple Color Emoji','Segoe UI Emoji','Noto Color Emoji';
     background:var(--ink);
     color:var(--parchment);
     min-height:100%;
@@ -1174,14 +1180,6 @@
   #quest-root .speak-btn{ background:none; border:none; cursor:pointer; font-size:11.5px; margin-left:8px; opacity:.7; padding:0; color:var(--teal); font-family:inherit; }
   #quest-root .speak-btn:hover:not(:disabled){ opacity:1; }
 
-  #quest-root .lb-row{ display:flex; align-items:center; gap:10px; background:var(--ink-2); border:1px solid var(--line); border-radius:9px; padding:8px 12px; margin-bottom:6px; font-size:13px; }
-  #quest-root .lb-row.you{ border-color:var(--amber); background:rgba(242,165,60,.1); }
-  #quest-root .lb-rank{ width:26px; font-family:'JetBrains Mono',monospace; color:var(--text-dim); font-size:12px; }
-  #quest-root .lb-av{ font-size:18px; }
-  #quest-root .lb-name{ flex:1; font-weight:600; }
-  #quest-root .lb-streak{ font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--text-dim); }
-  #quest-root .lb-xp{ font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--amber); min-width:64px; text-align:right; }
-  #quest-root .lb-note{ font-size:11px; color:var(--text-dim); margin:4px 0 0; }
   #quest-root .qb-text{ width:100%; min-height:240px; background:var(--ink); border:1px solid var(--line); border-radius:8px; color:var(--parchment); font-family:'JetBrains Mono',monospace; font-size:11.5px; padding:10px; resize:vertical; }
   #quest-root .qb-err{ color:var(--red); font-size:12px; margin:8px 0 0; line-height:1.5; }
   #quest-root .qb-ok{ color:var(--teal); font-size:12px; margin:8px 0 0; }
@@ -1217,6 +1215,9 @@
   #quest-root .acc-body{ display:none; padding:2px 11px 12px; flex-direction:column; gap:16px; }
   #quest-root .acc.open .acc-body{ display:flex; }
 
+  #quest-root .ico{ display:inline-block; width:1em; height:1em; vertical-align:-0.15em; line-height:1; }
+  #quest-root .ico svg{ width:100%; height:100%; display:block; }
+
   /* ---------- Fluid height: fill the window instead of fixed max-heights ---------- */
   #quest-root{ height:var(--vvh,100dvh); min-height:0; max-width:1100px; margin:0 auto; }
   #quest-root > #onboarding-screen:not(.hidden),
@@ -1250,6 +1251,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 
+</head>
+<body>
 <div id="quest-root">
 
   <!-- ===== Onboarding / Profile Creation ===== -->
@@ -1339,11 +1342,6 @@
     <div>
       <p class="section-label">🎯 Daily Challenges</p>
       <div id="daily-board"></div>
-    </div>
-
-    <div>
-      <p class="section-label">🏅 Leaderboard</p>
-      <div id="leaderboard"></div>
     </div>
 
     <div>
@@ -1998,30 +1996,6 @@ Respond ONLY with one JSON object, no markdown fences:
     objStripOpen = !objStripOpen;
     renderObjStrip();
   });
-
-  // ---------- Leaderboard (demo rivals; real rankings need a server) ----------
-  const RIVALS = [
-    { name: 'Mika', emoji: '🐼', rate: 1.6 },
-    { name: 'Leo', emoji: '🦁', rate: 1.2 },
-    { name: 'Sofia', emoji: '🦉', rate: 0.9 },
-    { name: 'Kenji', emoji: '🐙', rate: 0.7 },
-    { name: 'Ana', emoji: '🦋', rate: 0.5 },
-    { name: 'Tom', emoji: '🐢', rate: 0.3 }
-  ];
-
-  function renderLeaderboard(){
-    const box = document.getElementById('leaderboard');
-    if(!box) return;
-    const days = Math.max(0, Math.floor((Date.now() - Date.UTC(2026, 0, 1)) / 864e5));
-    const me = (AVATAR_OPTIONS.find(a => a.id === selectedAvatar) || AVATAR_OPTIONS[0]).emoji;
-    const rows = RIVALS.map(r => ({ name: r.name, emoji: r.emoji, xp: Math.round(r.rate * days), streak: 1 + ((days * 7 + r.name.length * 3) % 12), you: false }));
-    rows.push({ name: 'You', emoji: me, xp: totalXP, streak: streakDays, you: true });
-    rows.sort((a, b) => b.xp - a.xp);
-    const medals = ['🥇', '🥈', '🥉'];
-    box.innerHTML = rows.map((r, i) =>
-      '<div class="lb-row' + (r.you ? ' you' : '') + '"><span class="lb-rank">' + (medals[i] || '#' + (i + 1)) + '</span><span class="lb-av">' + r.emoji + '</span><span class="lb-name">' + escapeHtml(r.name) + '</span><span class="lb-streak">🔥 ' + r.streak + '</span><span class="lb-xp">' + r.xp + ' XP</span></div>'
-    ).join('') + '<p class="lb-note">Sample players for fun — real online rankings need a server.</p>';
-  }
 
   // ---------- Quest Builder (custom scenarios) ----------
   const QB_TEMPLATE = JSON.stringify({
@@ -2832,7 +2806,6 @@ Respond ONLY with one JSON object, no markdown fences:
 
   function renderCharSheetTeaser(){
     renderDailyBoard();
-    renderLeaderboard();
     checkBadges();
     const playerLevel = getPlayerLevel();
     const title = getPlayerTitle(playerLevel);
@@ -3510,6 +3483,73 @@ Respond ONLY with a single JSON object, no markdown fences, no extra text, in ex
     updateBadge();
   })();
 
+  // ---------- Symbol icons: swap text glyphs for SVG so no font draws them as emoji or CJK glyphs ----------
+  (function installSymbolIcons(){
+    const S = (body, filled) => '<svg viewBox="0 0 16 16" aria-hidden="true" ' + (filled ? 'fill="currentColor" stroke="none"' : 'fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"') + '>' + body + '</svg>';
+    const STAR = '<path d="M8 1.6l1.9 4.2 4.5.4-3.4 3 1 4.4L8 11.2 4 13.6l1-4.4-3.4-3 4.5-.4z"/>';
+    const PENCIL = '<path d="M3 13l.7-3L10.6 3.1a1.5 1.5 0 012.1 2.1L5.8 12.3 3 13z"/>';
+    const ICONS = {
+      '\u2715': S('<path d="M3.5 3.5l9 9M12.5 3.5l-9 9"/>'),
+      '\u2713': S('<path d="M3 8.5l3.2 3.2L13 4.5"/>'),
+      '\u25BE': S('<path d="M4 6l4 4 4-4"/>'),
+      '\u25B4': S('<path d="M4 10l4-4 4 4"/>'),
+      '\u2192': S('<path d="M3 8h10M9 4l4 4-4 4"/>'),
+      '\u2190': S('<path d="M13 8H3M7 4L3 8l4 4"/>'),
+      '\u21BB': S('<path d="M13 8a5 5 0 1 1-1.6-3.7M13 2.5v3h-3"/>'),
+      '\u21BA': S('<path d="M3 8a5 5 0 1 0 1.6-3.7M3 2.5v3h3"/>'),
+      '\u25B6': S('<path d="M5 3l8 5-8 5z"/>', true),
+      '\u2605': S(STAR, true),
+      '\u2606': S(STAR),
+      '\u2B07': S('<path d="M8 2.5v8M4.5 7.2L8 10.7l3.5-3.5M3 13.5h10"/>'),
+      '\u270F': S(PENCIL),
+      '\u270E': S(PENCIL),
+      '\u25CB': S('<circle cx="8" cy="8" r="4.2"/>'),
+      '\u25CF': S('<circle cx="8" cy="8" r="4.6"/>', true)
+    };
+    const TEST = /[\u2715\u2713\u25BE\u25B4\u2192\u2190\u21BB\u21BA\u25B6\u2605\u2606\u2B07\u270F\u270E\u25CB\u25CF]/;
+    const RE = /([\u2715\u2713\u25BE\u25B4\u2192\u2190\u21BB\u21BA\u25B6\u2605\u2606\u2B07\u270F\u270E\u25CB\u25CF])\uFE0F?/g;
+    const HOST = 'button, .qc-action, .qc-footer, .qc-title, .wl-box, .os-item, .dg-check, .done-badge, .cs-view-link, .shop-btn, .back-btn, .chip, .toast';
+
+    function sweep(root){
+      if(!root) return;
+      const nodes = [];
+      if(root.nodeType === 3){
+        nodes.push(root);
+      } else if(root.nodeType === 1){
+        const w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+        while(w.nextNode()) nodes.push(w.currentNode);
+      }
+      nodes.forEach(node => {
+        const txt = node.nodeValue || '';
+        if(!TEST.test(txt)) return;
+        const p = node.parentElement;
+        if(!p || !p.closest(HOST) || p.closest('textarea, script, style')) return;
+        const frag = document.createDocumentFragment();
+        let last = 0, m;
+        RE.lastIndex = 0;
+        while((m = RE.exec(txt))){
+          if(m.index > last) frag.appendChild(document.createTextNode(txt.slice(last, m.index)));
+          const sp = document.createElement('span');
+          sp.className = 'ico';
+          sp.innerHTML = ICONS[m[1]];
+          frag.appendChild(sp);
+          last = m.index + m[0].length;
+        }
+        if(last < txt.length) frag.appendChild(document.createTextNode(txt.slice(last)));
+        node.parentNode.replaceChild(frag, node);
+      });
+    }
+
+    const root = document.getElementById('quest-root');
+    sweep(root);
+    new MutationObserver(muts => {
+      muts.forEach(mu => {
+        mu.addedNodes.forEach(n => sweep(n));
+        if(mu.type === 'characterData') sweep(mu.target);
+      });
+    }).observe(root, { childList: true, subtree: true, characterData: true });
+  })();
+
   // Return to the profile page, prefilled; saving keeps all progress.
   document.getElementById('profile-btn').addEventListener('click', () => {
     obName.value = profile.name || '';
@@ -4159,3 +4199,5 @@ Respond ONLY with a single JSON object, no markdown fences, in exactly this shap
   }
 })();
 </script>
+</body>
+</html>
