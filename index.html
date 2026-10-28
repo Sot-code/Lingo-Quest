@@ -1218,6 +1218,25 @@
   #quest-root .ico{ display:inline-block; width:1em; height:1em; vertical-align:-0.15em; line-height:1; }
   #quest-root .ico svg{ width:100%; height:100%; display:block; }
 
+  #quest-root .acct-line{ margin:4px 0 0; font-size:11px; color:var(--text-dim); font-family:'JetBrains Mono',monospace; }
+
+  #quest-root .wave-wrap{ position:relative; padding:6px 18px; background:var(--ink-2); border-top:1px solid var(--line); }
+  #quest-root .wave-wrap.hidden{ display:none; }
+  #quest-root #wave-canvas{ width:100%; height:64px; display:block; }
+  #quest-root .wave-label{ position:absolute; right:24px; top:10px; font-family:'JetBrains Mono',monospace; font-size:10.5px; color:var(--text-dim); }
+  #quest-root .voice-contour{ margin-top:6px; display:flex; align-items:center; gap:8px; font-size:10px; opacity:.85; }
+
+  #home-screen{ gap:12px; padding:14px 18px 18px; }
+  #home-screen .home-header{ padding-bottom:10px; }
+  #home-screen h1{ font-size:22px; }
+  #home-screen .avatar-badge{ width:44px; height:44px; font-size:26px; }
+  #quest-root .char-sheet-teaser{ padding:9px 14px; }
+  #quest-root .home-tabbar{ display:flex; gap:6px; position:sticky; top:0; z-index:5; background:var(--ink); padding:4px 0 6px; }
+  #quest-root .home-tab{ flex:1; background:var(--ink-2); border:1px solid var(--line); color:var(--text-dim); border-radius:9px; padding:9px 6px; font-size:13px; font-weight:600; font-family:inherit; cursor:pointer; }
+  #quest-root .home-tab.active{ background:rgba(242,165,60,.12); border-color:var(--amber); color:var(--amber); }
+  #quest-root .home-page{ display:none; flex-direction:column; gap:14px; }
+  #quest-root .home-page.active{ display:flex; }
+
   /* ---------- Fluid height: fill the window instead of fixed max-heights ---------- */
   #quest-root{ height:var(--vvh,100dvh); min-height:0; max-width:1100px; margin:0 auto; }
   #quest-root > #onboarding-screen:not(.hidden),
@@ -1309,6 +1328,7 @@
         <div>
           <p class="home-eyebrow" id="home-greeting">Welcome back</p>
           <h1 id="home-username">Learner</h1>
+          <p class="acct-line" id="acct-line"></p>
         </div>
       </div>
       <div class="home-stats">
@@ -1342,6 +1362,11 @@
     <div>
       <p class="section-label">🎯 Daily Challenges</p>
       <div id="daily-board"></div>
+    </div>
+
+    <div>
+      <p class="section-label">⚔️ Boss Battles</p>
+      <div class="daily-row" id="boss-row"></div>
     </div>
 
     <div>
@@ -1441,6 +1466,7 @@
       <div class="chat-col">
         <div class="obj-strip" id="obj-strip"><button type="button" class="obj-strip-head" id="obj-strip-head"></button><div class="obj-strip-body" id="obj-strip-body"></div></div>
         <div class="log" id="log"></div>
+        <div class="wave-wrap hidden" id="wave-wrap"><canvas id="wave-canvas"></canvas><span class="wave-label" id="wave-label">Listening…</span></div>
         <div class="speed-timer-wrap hidden" id="speed-timer-wrap">
           <div class="speed-timer-track"><div class="speed-timer-bar" id="speed-timer-bar"></div></div>
           <span class="speed-timer-label" id="speed-timer-label">20s</span>
@@ -1997,6 +2023,286 @@ Respond ONLY with one JSON object, no markdown fences:
     renderObjStrip();
   });
 
+  // ---------- Boss Battles (rapid-fire sprints, built on Speed Mode) ----------
+  const BOSS_ROUNDS = 5;
+  const BOSS_PASS = 0.75;
+  const BOSS_UNLOCK_QUESTS = 2;
+  const BOSSES = {
+    beginner: { name: 'Captain Pip', title: 'The Gatekeeper', blurb: 'Answer five rapid-fire questions to pass the gate.', rewardTitle: 'Gate Crasher', avatar: 'unicorn', xp: 30, style: 'asks quick, simple everyday and personal questions, one after another' },
+    intermediate: { name: 'Director Vale', title: 'The Skeptic', blurb: 'Defend your ideas against five sharp objections.', rewardTitle: 'Silver Tongue', avatar: 'eagle', xp: 50, style: 'raises sharp objections and polite but firm pushback that the learner must answer with reasons' },
+    advanced: { name: 'Commissioner Ruiz', title: 'The Interrogator', blurb: 'Survive five curveballs under pressure.', rewardTitle: 'Unshakable', avatar: 'crown', xp: 80, style: 'throws unexpected curveballs, hypotheticals and high-pressure follow-up questions' }
+  };
+  AVATAR_OPTIONS.push(
+    { id: 'unicorn', emoji: '🦄', cost: 0, boss: 'beginner' },
+    { id: 'eagle', emoji: '🦅', cost: 0, boss: 'intermediate' },
+    { id: 'crown', emoji: '👑', cost: 0, boss: 'advanced' }
+  );
+  BADGES.push({ id: 'boss', icon: '⚔️', title: 'Boss Slayer', desc: 'Defeat a Boss Battle', test: () => Object.keys(stats).some(k => k.indexOf('boss_') === 0) });
+
+  function bossTitle(){
+    for(let i = LEVEL_ORDER.length - 1; i >= 0; i--){
+      if(stats['boss_' + LEVEL_ORDER[i]]) return BOSSES[LEVEL_ORDER[i]].rewardTitle;
+    }
+    return '';
+  }
+
+  function completedInLevel(level){
+    return QUEST_CATALOG.filter(q => q.level === level && completedQuestIds.has(q.id)).length;
+  }
+
+  function buildBossPrompt(b){
+    return `You are ${b.name}, "${b.title}", a boss in a language-learning app. This is a rapid-fire battle of ${BOSS_ROUNDS} rounds. You ${b.style}.
+Keep every line to 1-2 short sentences. Never correct grammar in-character.
+
+Flow: the learner starts by saying they are ready. Reply with a very short taunt and ask the round 1 question. After each learner answer, react in at most 6 words and immediately ask the next question. After the answer to round ${BOSS_ROUNDS}, give a short closing line and finish.
+
+Silently track objectives r1 to r${BOSS_ROUNDS}: "rN" is true once the learner has answered the round N question (any answer counts, even a weak one). Do not count the "ready" message.
+Score every answer from 0 to 1 for grammar, relevance and fluency. When all rounds are answered set "questComplete" to true and set "accuracy" to the AVERAGE of all round scores; otherwise "accuracy" is 0. Put one short sentence of feedback in "feedback" when complete.
+Also check the learner's MOST RECENT message for a notable slip; if worth polishing set "recast" to a short natural version of that part, else null.
+
+Respond ONLY with one JSON object, no markdown fences:
+{"reply": "<${b.name}'s line>", "objectives": {${Array.from({ length: BOSS_ROUNDS }, (_, i) => '"r' + (i + 1) + '": <bool>').join(', ')}}, "questComplete": <bool>, "feedback": "<empty unless complete>", "accuracy": <0-1>, "recast": <string or null>}`;
+  }
+
+  function resolveBoss(){
+    const b = BOSSES[currentBossLevel];
+    if(!b) return;
+    if(bossPassed){
+      const first = !stats['boss_' + currentBossLevel];
+      stats['boss_' + currentBossLevel] = 1;
+      ownedAvatars.add(b.avatar);
+      if(first){
+        totalXP += b.xp;
+        bossNote = ' ⚔️ VICTORY! +' + b.xp + ' XP, the title “' + b.rewardTitle + '” and a rare avatar unlocked.';
+      } else {
+        bossNote = ' ⚔️ Victory again!';
+      }
+      showToast('⚔️ Boss defeated: ' + b.title);
+      checkBadges();
+    } else {
+      bossNote = ' Defeated — you need ' + Math.round(BOSS_PASS * 100) + '%+ accuracy to win. Train up and try again!';
+    }
+  }
+
+  function renderBossRow(){
+    const row = document.getElementById('boss-row');
+    if(!row) return;
+    row.innerHTML = '';
+    LEVEL_ORDER.forEach(level => {
+      const b = BOSSES[level];
+      const beaten = !!stats['boss_' + level];
+      const need = Math.max(0, BOSS_UNLOCK_QUESTS - completedInLevel(level));
+      const locked = need > 0;
+      const card = document.createElement('div');
+      card.className = 'quest-card' + (locked ? ' locked' : '') + (beaten ? ' completed' : '');
+      card.innerHTML = (beaten ? '<span class="done-badge">✓ Defeated</span>' : (locked ? '<span class="lock-badge">🔒 Locked</span>' : '')) +
+        '<p class="qc-title"></p><p class="qc-scenario"></p><div class="qc-footer"><span class="qc-xp"></span><span class="qc-action"></span></div>';
+      card.querySelector('.qc-title').textContent = '⚔️ ' + b.name;
+      const lockText = 'Complete ' + need + ' more ' + LEVEL_LABELS[level] + ' quest' + (need === 1 ? '' : 's') + ' to challenge ' + b.title + '.';
+      card.querySelector('.qc-scenario').textContent = locked ? lockText : b.title + ': ' + b.blurb + ' Win for the title “' + b.rewardTitle + '” and a rare avatar.';
+      card.querySelector('.qc-xp').textContent = '⚡ ' + b.xp + ' XP';
+      card.querySelector('.qc-action').textContent = locked ? '' : (beaten ? 'Rematch →' : 'Fight →');
+      card.addEventListener('click', () => { if(locked) showToast(lockText); else openBoss(level); });
+      row.appendChild(card);
+    });
+  }
+
+  function openBoss(level){
+    const b = BOSSES[level];
+    if(!b) return;
+    if(autoReturnTimer){ clearTimeout(autoReturnTimer); autoReturnTimer = null; }
+    stopSpeedTimer();
+    homeScreen.classList.add('hidden');
+    lessonScreen.classList.add('hidden');
+    appScreen.classList.remove('hidden');
+
+    currentQuestId = 'boss:' + level;
+    currentBossLevel = level;
+    currentQuestDef = {
+      npcName: b.name,
+      intro: b.name + ' blocks your way. ' + BOSS_ROUNDS + ' rapid-fire rounds, ' + SPEED_SECONDS + ' seconds each. Score ' + Math.round(BOSS_PASS * 100) + '%+ accuracy to win.',
+      objectives: Array.from({ length: BOSS_ROUNDS }, (_, i) => ({ id: 'r' + (i + 1), label: 'Survive round ' + (i + 1) })),
+      systemPrompt: buildBossPrompt(b)
+    };
+    history = [];
+    questComplete = false;
+    objState = {};
+    currentQuestDef.objectives.forEach(o => { objState[o.id] = false; });
+    XP_TOTAL = (XP_TABLE[level] || 10) * 2;
+    xp = 0;
+    isSpeedMode = true;
+    isReviewQuest = false;
+    isBoss = true;
+    bossPassed = false;
+    bossNote = '';
+
+    log.innerHTML = '';
+    completeBanner.classList.remove('show');
+    input.disabled = false;
+    sendBtn.disabled = false;
+
+    document.getElementById('quest-eyebrow').textContent = '⚔️ Boss Battle · ' + LEVEL_LABELS[level];
+    document.getElementById('quest-title').textContent = b.title;
+    document.getElementById('welcome-line').textContent = 'Welcome, ' + profile.name + ' · ' + (LEVEL_LABELS[profile.level] || '');
+
+    addMessage('system', currentQuestDef.intro);
+    renderObjectives();
+    renderChips();
+    renderXP();
+    input.value = 'I am ready!';
+    handleSend();
+  }
+
+  // ---------- Voice visualizer: live waveform + pitch contour while the mic is open ----------
+  const viz = { stream: null, ctx: null, analyser: null, raf: 0, buf: null, pitches: [], frame: 0, on: false };
+  let lastVoiceContour = [];
+  const NOTE_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+
+  function noteName(f){
+    const n = Math.round(12 * Math.log2(f / 440)) + 69;
+    return NOTE_NAMES[((n % 12) + 12) % 12] + (Math.floor(n / 12) - 1);
+  }
+
+  // Autocorrelation pitch estimate in Hz (human voice range), or -1 when silent or unvoiced.
+  function estimatePitch(buf, sampleRate){
+    let energy = 0;
+    for(let i = 0; i < buf.length; i++) energy += buf[i] * buf[i];
+    if(Math.sqrt(energy / buf.length) < 0.015) return -1;
+    const minLag = Math.floor(sampleRate / 500);
+    const maxLag = Math.floor(sampleRate / 70);
+    let best = -1, bestCorr = 0;
+    for(let lag = minLag; lag <= maxLag; lag++){
+      let sum = 0;
+      for(let i = 0; i < buf.length - lag; i++) sum += buf[i] * buf[i + lag];
+      if(sum > bestCorr){ bestCorr = sum; best = lag; }
+    }
+    if(best < 0 || bestCorr / energy < 0.3) return -1;
+    return sampleRate / best;
+  }
+
+  function drawContour(g, pts, W, H, color, lw, windowN){
+    const lo = Math.log2(70), hi = Math.log2(500);
+    const slice = windowN ? pts.slice(-windowN) : pts;
+    g.strokeStyle = color;
+    g.fillStyle = color;
+    g.lineWidth = lw;
+    g.lineJoin = 'round';
+    g.lineCap = 'round';
+    let prev = null;
+    slice.forEach((f, i) => {
+      if(!f){ prev = null; return; }
+      const x = windowN ? W - (slice.length - i) * (W / windowN) : (i / Math.max(1, slice.length - 1)) * W;
+      const t = Math.min(1, Math.max(0, (Math.log2(f) - lo) / (hi - lo)));
+      const y = H - 2 - t * (H - 4);
+      if(prev){ g.beginPath(); g.moveTo(prev[0], prev[1]); g.lineTo(x, y); g.stroke(); }
+      else { g.beginPath(); g.arc(x, y, lw, 0, 6.283); g.fill(); }
+      prev = [x, y];
+    });
+  }
+
+  function sizeWaveCanvas(){
+    const cv = document.getElementById('wave-canvas');
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    cv.width = Math.max(200, cv.clientWidth) * dpr;
+    cv.height = 64 * dpr;
+    return dpr;
+  }
+
+  async function startViz(){
+    if(viz.on) return;
+    let stream;
+    try {
+      if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return;
+      stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } });
+    } catch(e){ return; }   // no mic access for the picture: speech recognition still works
+    if(!recording){ stream.getTracks().forEach(t => t.stop()); return; }
+    try {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      viz.ctx = new AC();
+      viz.analyser = viz.ctx.createAnalyser();
+      viz.analyser.fftSize = 2048;
+      viz.ctx.createMediaStreamSource(stream).connect(viz.analyser);
+    } catch(e){ stream.getTracks().forEach(t => t.stop()); return; }
+    viz.stream = stream;
+    viz.buf = new Float32Array(viz.analyser.fftSize);
+    viz.pitches = [];
+    viz.frame = 0;
+    viz.on = true;
+    document.getElementById('wave-wrap').classList.remove('hidden');
+    sizeWaveCanvas();
+    drawViz();
+  }
+
+  function drawViz(){
+    if(!viz.on) return;
+    viz.raf = requestAnimationFrame(drawViz);
+    const cv = document.getElementById('wave-canvas');
+    const g = cv.getContext('2d');
+    const W = cv.width, H = cv.height;
+    const dpr = H / 64;
+    viz.analyser.getFloatTimeDomainData(viz.buf);
+    viz.frame += 1;
+    if(viz.frame % 3 === 0){
+      const f = estimatePitch(viz.buf, viz.ctx.sampleRate);
+      viz.pitches.push(f > 0 ? f : null);
+      if(viz.pitches.length > 400) viz.pitches.shift();
+      document.getElementById('wave-label').textContent = f > 0 ? Math.round(f) + ' Hz \u00b7 ' + noteName(f) : 'Listening\u2026';
+    }
+    const cs = getComputedStyle(document.getElementById('quest-root'));
+    const teal = cs.getPropertyValue('--teal').trim() || '#49c6b6';
+    const amber = cs.getPropertyValue('--amber').trim() || '#f2a53c';
+    const line = cs.getPropertyValue('--line').trim() || '#33384a';
+    g.clearRect(0, 0, W, H);
+    g.strokeStyle = line;
+    g.lineWidth = 1;
+    g.beginPath(); g.moveTo(0, H / 2); g.lineTo(W, H / 2); g.stroke();
+    drawContour(g, viz.pitches, W, H, amber, 2 * dpr, 150);
+    g.strokeStyle = teal;
+    g.lineWidth = 1.6 * dpr;
+    g.beginPath();
+    for(let x = 0; x < W; x++){
+      const v = viz.buf[Math.floor(x * viz.buf.length / W)];
+      const y = Math.min(H - 1, Math.max(1, H / 2 - v * H * 0.9));
+      if(x === 0) g.moveTo(x, y); else g.lineTo(x, y);
+    }
+    g.stroke();
+  }
+
+  function stopViz(){
+    if(!viz.on && !viz.stream) return;
+    cancelAnimationFrame(viz.raf);
+    lastVoiceContour = viz.pitches.slice();
+    viz.on = false;
+    try { if(viz.stream) viz.stream.getTracks().forEach(t => t.stop()); } catch(e){}
+    try { if(viz.ctx) viz.ctx.close(); } catch(e){}
+    viz.stream = null;
+    viz.ctx = null;
+    viz.analyser = null;
+    document.getElementById('wave-wrap').classList.add('hidden');
+  }
+
+  // After sending a spoken answer, keep a small copy of the pitch contour on that message.
+  function attachContour(userDiv){
+    const pts = lastVoiceContour;
+    lastVoiceContour = [];
+    if(!pts || pts.filter(p => p).length < 8) return;
+    const box = document.createElement('div');
+    box.className = 'voice-contour';
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const cv = document.createElement('canvas');
+    cv.width = 180 * dpr;
+    cv.height = 36 * dpr;
+    cv.style.width = '180px';
+    cv.style.height = '36px';
+    const ink = getComputedStyle(document.getElementById('quest-root')).getPropertyValue('--ink').trim() || '#12141f';
+    drawContour(cv.getContext('2d'), pts, cv.width, cv.height, ink, 1.6 * dpr, 0);
+    const label = document.createElement('span');
+    label.textContent = 'your pitch';
+    box.appendChild(cv);
+    box.appendChild(label);
+    userDiv.appendChild(box);
+  }
+
   // ---------- Quest Builder (custom scenarios) ----------
   const QB_TEMPLATE = JSON.stringify({
     level: 'beginner',
@@ -2370,7 +2676,9 @@ Respond ONLY with one JSON object, no markdown fences:
   }
 
   // ---------- Daily streak + saved progress ----------
-  const SAVE_KEY = 'lingoquest_progress_v1';
+  let SAVE_KEY = 'lingoquest_progress_v1';   // becomes per-account once the viewer is known
+  let lastSaveSig = '';
+  let loadedSavedAt = 0;
   function dayStr(d){ return d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate(); }
 
   function touchStreak(){
@@ -2387,6 +2695,16 @@ Respond ONLY with one JSON object, no markdown fences:
   let recastMode = 'auto';
   let stats = {};
   let customQuests = [];
+  let isBoss = false;
+  let bossPassed = false;
+  let bossNote = '';
+  let currentBossLevel = '';
+  let cloudDb = null;
+  let cloudUid = null;
+  let cloudName = '';
+  let cloudTimer = null;
+  let cloudFailed = false;
+  let resetting = false;
   let unlockedBadges = {};
   let daily = { date: '', progress: {}, claimed: {} };
   let savedPhrases = [];
@@ -2463,8 +2781,8 @@ Respond ONLY with one JSON object, no markdown fences:
 
   function saveProgress(){
     try {
-      if(!profile.name) return;
-      localStorage.setItem(SAVE_KEY, JSON.stringify({
+      if(!profile.name || resetting) return;
+      const body = {
         schemaVersion: SAVE_SCHEMA_VERSION,
         recastMode, savedPhrases, stats, unlockedBadges, daily, customQuests,
         profile, totalXP, streakDays, lastActive, accuracyHistory, savedWords,
@@ -2473,7 +2791,16 @@ Respond ONLY with one JSON object, no markdown fences:
         completedGrammarIds: [...completedGrammarIds],
         ownedAvatars: [...ownedAvatars],
         ownedThemes: [...ownedThemes]
-      }));
+      };
+      // Only stamp a new save time when something really changed, so syncing can tell which copy is newer.
+      const sig = JSON.stringify(body);
+      if(sig === lastSaveSig) return;
+      const baseline = lastSaveSig === '' && loadedSavedAt > 0;
+      lastSaveSig = sig;
+      body.savedAt = baseline ? loadedSavedAt : Date.now();
+      const out = JSON.stringify(body);
+      localStorage.setItem(SAVE_KEY, out);
+      if(!baseline) scheduleCloudPush(out, body.savedAt);
     } catch(e){}
   }
 
@@ -2491,6 +2818,8 @@ Respond ONLY with one JSON object, no markdown fences:
       selectedTheme = s.selectedTheme || 'classic';
       selectedInterests = s.selectedInterests || [];
       recastMode = ['auto', 'gentle', 'standard', 'strict'].includes(s.recastMode) ? s.recastMode : 'auto';
+      lastSaveSig = '';
+      loadedSavedAt = Number(s.savedAt) || 0;
       savedPhrases = Array.isArray(s.savedPhrases) ? s.savedPhrases.filter(p => p && p.better) : [];
       stats = (s.stats && typeof s.stats === 'object') ? s.stats : {};
       customQuests = Array.isArray(s.customQuests) ? s.customQuests.filter(q => q && typeof q.id === 'string' && /^c-/.test(q.id) && validateQuestJSON(q).length === 0) : [];
@@ -2642,7 +2971,7 @@ Respond ONLY with one JSON object, no markdown fences:
 
     charModalBody.innerHTML = `
       <p style="font-size:36px; margin:0 0 4px;">${avatarEmoji}</p>
-      <p class="modal-word">${escapeHtml(title)}</p>
+      <p class="modal-word">${escapeHtml(title)}${bossTitle() ? '<br><span style="font-size:13px;color:var(--teal);">' + escapeHtml(bossTitle()) + '</span>' : ''}</p>
       <p class="modal-pos" style="text-transform:none;">${escapeHtml(profile.name)} · Level ${playerLevel}</p>
       <p class="modal-phon">Learning ${escapeHtml(profile.language || '—')} · ${LEVEL_LABELS[profile.level] || ''}</p>
       <div class="cs-stat-grid">
@@ -2722,7 +3051,7 @@ Respond ONLY with one JSON object, no markdown fences:
       html += `
         <div class="shop-item${equipped ? ' equipped' : ''}" data-kind="avatar" data-id="${a.id}">
           <span class="si-visual">${a.emoji}</span>
-          <span class="si-cost${owned ? ' owned' : ''}">${equipped ? 'Equipped' : owned ? 'Owned' : '⚡ ' + a.cost}</span>
+          <span class="si-cost${owned ? ' owned' : ''}">${equipped ? 'Equipped' : owned ? 'Owned' : (a.boss ? '🔒 Boss' : '⚡ ' + a.cost)}</span>
         </div>
       `;
     });
@@ -2757,6 +3086,7 @@ Respond ONLY with one JSON object, no markdown fences:
   function handleShopClick(id, catalog, ownedSet, selectedVarName){
     const item = catalog.find(x => x.id === id);
     if(!item) return;
+    if(item.boss && !ownedSet.has(id)){ showToast('Defeat the ' + item.boss + ' boss to unlock this.'); return; }
 
     if(ownedSet.has(id)){
       if(selectedVarName === 'selectedAvatar') selectedAvatar = id;
@@ -2806,12 +3136,14 @@ Respond ONLY with one JSON object, no markdown fences:
 
   function renderCharSheetTeaser(){
     renderDailyBoard();
+    renderBossRow();
+    renderAccountBadge();
     checkBadges();
     const playerLevel = getPlayerLevel();
     const title = getPlayerTitle(playerLevel);
     const xpIntoLevel = totalXP % XP_PER_PLAYER_LEVEL;
     const pct = Math.min(100, (xpIntoLevel / XP_PER_PLAYER_LEVEL) * 100);
-    document.getElementById('cs-player-title').textContent = title;
+    document.getElementById('cs-player-title').textContent = title + (bossTitle() ? ' · ' + bossTitle() : '');
     document.getElementById('cs-player-level').textContent = `Level ${playerLevel}`;
     document.getElementById('cs-xp-fill').style.width = pct + '%';
     document.getElementById('cs-xp-label').textContent = `${xpIntoLevel} / ${XP_PER_PLAYER_LEVEL} XP to next level`;
@@ -3205,6 +3537,7 @@ Respond ONLY with a single JSON object, no markdown fences, no extra text, in ex
       clearTimeout(autoReturnTimer);
       autoReturnTimer = null;
     }
+    isBoss = false;
     if(isReviewQuest && !questComplete && history.length){
       gradeReviewSession();
       isReviewQuest = false;
@@ -3233,7 +3566,7 @@ Respond ONLY with a single JSON object, no markdown fences, no extra text, in ex
   validateOnboarding();
 
   // Resume saved progress, autosave, and two-tap reset.
-  setTimeout(() => { if(loadProgress()) launchHome(); }, 0);
+  setTimeout(bootAccount, 0);
   setInterval(saveProgress, 3000);
   window.addEventListener('beforeunload', saveProgress);
 
@@ -3342,6 +3675,7 @@ Respond ONLY with a single JSON object, no markdown fences, no extra text, in ex
       try { localStorage.setItem(SAVE_KEY, JSON.stringify(migrated)); }
       catch(e){ backupMsg('Couldn’t store the imported data.'); return; }
       if(loadProgress()){
+        loadedSavedAt = 0;   // an import counts as a fresh change, so it syncs
         backupOverlay.classList.remove('show');
         launchHome();
         showToast('Progress imported ✓');
@@ -3550,6 +3884,136 @@ Respond ONLY with a single JSON object, no markdown fences, no extra text, in ex
     }).observe(root, { childList: true, subtree: true, characterData: true });
   })();
 
+  // ---------- Accounts: one save per signed-in viewer, synced to their private cloud storage ----------
+  async function initAccount(){
+    try {
+      const user = await claude.use('user');
+      const db = await claude.use('db');
+      if(user && db){
+        const uid = await user.id();
+        if(uid){
+          cloudDb = db;
+          cloudUid = uid;
+          SAVE_KEY = 'lingoquest_progress_v1_' + uid;
+          try { const me = await user.me(); cloudName = (me && me.name) || ''; } catch(e){}
+        }
+      }
+    } catch(e){}
+    renderAccountBadge();
+  }
+
+  async function bootAccount(){
+    await initAccount();
+    const LEGACY = 'lingoquest_progress_v1';
+    try {
+      // The first account to sign in on this browser adopts the earlier single-user save.
+      if(cloudUid && !localStorage.getItem(SAVE_KEY) && localStorage.getItem(LEGACY)){
+        localStorage.setItem(SAVE_KEY, localStorage.getItem(LEGACY));
+      }
+    } catch(e){}
+    if(!profile.name && loadProgress()) launchHome();
+    await pullCloud();
+  }
+
+  async function pullCloud(){
+    if(!cloudDb || !cloudUid) return;
+    try {
+      const snap = await cloudDb.doc('data/users/' + cloudUid + '/progress').get();
+      let raw = null, localAt = 0;
+      try { raw = localStorage.getItem(SAVE_KEY); localAt = (JSON.parse(raw || 'null') || {}).savedAt || 0; } catch(e){}
+      const d = snap.exists ? (snap.data() || {}) : {};
+      const cloudAt = Number(d.savedAt) || 0;
+      if(typeof d.json === 'string' && cloudAt > localAt){
+        localStorage.setItem(SAVE_KEY, d.json);
+        if(loadProgress()){ launchHome(); showToast('\u2601\ufe0f Progress synced from your account'); }
+      } else if(raw && localAt >= cloudAt){
+        scheduleCloudPush(raw, localAt || Date.now());
+      }
+    } catch(e){ cloudFailed = true; }
+    renderAccountBadge();
+  }
+
+  function scheduleCloudPush(json, at){
+    if(!cloudDb || !cloudUid) return;
+    if(cloudTimer) clearTimeout(cloudTimer);
+    cloudTimer = setTimeout(async () => {
+      try {
+        await cloudDb.doc('data/users/' + cloudUid + '/progress').set({ savedAt: at, json: json });
+        cloudFailed = false;
+      } catch(e){ cloudFailed = true; }
+      renderAccountBadge();
+    }, 1500);
+  }
+
+  function renderAccountBadge(){
+    const el = document.getElementById('acct-line');
+    if(!el) return;
+    if(cloudUid){
+      const who = cloudName ? ' as ' + cloudName : '';
+      el.textContent = cloudFailed
+        ? '\u26a0\ufe0f Signed in' + who + ' \u00b7 cloud sync failed, saved on this device'
+        : '\u2601\ufe0f Signed in' + who + ' \u00b7 your progress syncs to your account';
+    } else {
+      el.textContent = 'Not signed in \u00b7 progress is saved on this device only. Sign in to claude.ai to sync it.';
+    }
+  }
+
+  // ---------- Home pages: Home / Conversation / Grammar (no more long scrolling) ----------
+  (function buildHomePages(){
+    const home = document.getElementById('home-screen');
+    const teaser = document.getElementById('char-sheet-teaser');
+    const tabsEl = document.getElementById('level-tabs');
+    if(!home || !teaser || !tabsEl) return;
+    const find = test => Array.from(home.children).find(el => {
+      const l = el.querySelector(':scope > .section-label');
+      return l && test(l.textContent.trim());
+    });
+    const sec = {
+      event: find(t => t.indexOf('Random Event') >= 0),
+      daily: find(t => t.indexOf('Daily Challenges') >= 0),
+      today: find(t => t === "Today's Quests"),
+      boss: find(t => t.indexOf('Boss Battles') >= 0),
+      all: find(t => t === 'All Quests'),
+      review: find(t => t.indexOf('Word Review') >= 0),
+      builder: find(t => t.indexOf('Quest Builder') >= 0),
+      grammar: find(t => t === 'Grammar Lessons')
+    };
+
+    const mk = id => { const d = document.createElement('div'); d.className = 'home-page'; d.dataset.page = id; return d; };
+    const pages = { home: mk('home'), conv: mk('conv'), grammar: mk('grammar') };
+    [sec.event, sec.daily, sec.today].forEach(el => el && pages.home.appendChild(el));
+    [sec.boss, sec.all, sec.review, sec.builder].forEach(el => el && pages.conv.appendChild(el));
+    if(sec.grammar) pages.grammar.appendChild(sec.grammar);
+
+    const bar = document.createElement('div');
+    bar.className = 'home-tabbar';
+    const levelWrap = document.createElement('div');
+    levelWrap.appendChild(tabsEl);   // the level tabs now sit above the Conversation and Grammar pages
+
+    function show(id){
+      Object.keys(pages).forEach(k => pages[k].classList.toggle('active', k === id));
+      bar.querySelectorAll('.home-tab').forEach(b => b.classList.toggle('active', b.dataset.page === id));
+      levelWrap.style.display = id === 'home' ? 'none' : '';
+      home.scrollTop = 0;
+    }
+    [['home', '🏠 Home'], ['conv', '💬 Conversation'], ['grammar', '📘 Grammar']].forEach(([id, label]) => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'home-tab';
+      b.dataset.page = id;
+      b.textContent = label;
+      b.addEventListener('click', () => show(id));
+      bar.appendChild(b);
+    });
+
+    teaser.insertAdjacentElement('afterend', bar);
+    bar.insertAdjacentElement('afterend', levelWrap);
+    levelWrap.insertAdjacentElement('afterend', pages.home);
+    pages.home.insertAdjacentElement('afterend', pages.conv);
+    pages.conv.insertAdjacentElement('afterend', pages.grammar);
+    show('home');
+  })();
+
   // Return to the profile page, prefilled; saving keeps all progress.
   document.getElementById('profile-btn').addEventListener('click', () => {
     obName.value = profile.name || '';
@@ -3567,15 +4031,19 @@ Respond ONLY with a single JSON object, no markdown fences, no extra text, in ex
 
   const resetBtn = document.getElementById('reset-btn');
   let resetArmed = false;
-  resetBtn.addEventListener('click', () => {
+  resetBtn.addEventListener('click', async () => {
     if(!resetArmed){
       resetArmed = true;
       resetBtn.textContent = 'Tap again to erase';
       setTimeout(() => { resetArmed = false; resetBtn.textContent = '↺ Reset'; }, 3000);
       return;
     }
+    resetting = true;
     try { localStorage.removeItem(SAVE_KEY); } catch(e){}
     window.removeEventListener('beforeunload', saveProgress);
+    if(cloudDb && cloudUid){
+      try { await cloudDb.doc('data/users/' + cloudUid + '/progress').delete(); } catch(e){}
+    }
     location.reload();
   });
 
@@ -3947,6 +4415,7 @@ Respond ONLY with a single JSON object, no markdown fences, no extra text, in ex
 
     const userDiv = addMessage('user', text, { voice: wasVoice });
     checkSavedPhraseUse(text, userDiv);
+    if(wasVoice) attachContour(userDiv);
     input.value = '';
     sendBtn.disabled = true;
     input.disabled = true;
@@ -3997,24 +4466,30 @@ Respond ONLY with a single JSON object, no markdown fences, no extra text, in ex
         xp = XP_TOTAL;
         renderXP();
 
-        const speedBonus = isSpeedMode ? SPEED_BONUS_XP : 0;
+        if(isBoss){
+          const a0 = (typeof result.accuracy === 'number' && result.accuracy > 0) ? result.accuracy : 0.5;
+          bossPassed = a0 >= BOSS_PASS;
+          if(!bossPassed) XP_TOTAL = Math.round(XP_TOTAL / 4);
+        }
+        const speedBonus = (isSpeedMode && !isBoss) ? SPEED_BONUS_XP : 0;
         const earnedTotal = XP_TOTAL + speedBonus;
         xpEarnedEl.textContent = earnedTotal;
 
         totalXP += earnedTotal;
         completedQuestIds.add(currentQuestId);
         bumpStat('quests');
-        if(isSpeedMode) bumpStat('speed');
+        if(isSpeedMode && !isBoss) bumpStat('speed');
         if(isReviewQuest) bumpStat('reviews');
         touchStreak();
 
         const acc = (typeof result.accuracy === 'number' && result.accuracy > 0) ? result.accuracy : 0.75;
         accuracyHistory.push(acc);
+        if(isBoss) resolveBoss();
         if(acc >= 0.9) bumpStat('sharp');
         const accPct = Math.round(acc * 100);
 
         let feedbackMsg = (result.feedback || "Nicely done!") + ` (Accuracy: ${accPct}%)`;
-        if(isSpeedMode){
+        if(isSpeedMode && !isBoss){
           feedbackMsg += ` ⚡ Speed Bonus +${SPEED_BONUS_XP} XP!`;
         }
 
@@ -4029,7 +4504,8 @@ Respond ONLY with a single JSON object, no markdown fences, no extra text, in ex
           addMessage('system', `Level up! You're now ${LEVEL_LABELS[leveledTo]}.`);
         }
 
-        feedbackText.textContent = feedbackMsg;
+        feedbackText.textContent = feedbackMsg + bossNote;
+        bossNote = '';
         completeBanner.classList.add('show');
         addMessage('system', 'Quest complete');
 
@@ -4145,6 +4621,7 @@ Respond ONLY with a single JSON object, no markdown fences, in exactly this shap
 
     recognizer.onend = () => {
       recording = false;
+      stopViz();
       micBtn.classList.remove('recording');
       input.placeholder = 'Type your response…';
     };
@@ -4156,6 +4633,7 @@ Respond ONLY with a single JSON object, no markdown fences, in exactly this shap
         return;
       }
       recording = true;
+      startViz();
       micBtn.classList.add('recording');
       input.placeholder = 'Listening…';
       try {
