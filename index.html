@@ -1237,6 +1237,8 @@
   #quest-root .home-page{ display:none; flex-direction:column; gap:14px; }
   #quest-root .home-page.active{ display:flex; }
 
+  #quest-root .npc-pix{ width:20px; height:20px; image-rendering:pixelated; vertical-align:middle; border-radius:4px; }
+
   /* ---------- Fluid height: fill the window instead of fixed max-heights ---------- */
   #quest-root{ height:var(--vvh,100dvh); min-height:0; max-width:1100px; margin:0 auto; }
   #quest-root > #onboarding-screen:not(.hidden),
@@ -2303,12 +2305,131 @@ Respond ONLY with one JSON object, no markdown fences:
     userDiv.appendChild(box);
   }
 
+  // ---------- NPC persona creator: avatar (emoji or AI pixel art) + voice personality ----------
+  const NPC_EMOJIS = ['🧑‍🏫', '👩‍🍳', '🧑‍🚀', '🤖', '🧙', '🦊', '🐱', '🐲', '👽', '🧛', '🧑‍💼', '🧑‍⚕️'];
+  const NPC_TONES = [
+    { id: 'friendly', label: 'Friendly', text: 'warm, friendly and natural', rate: 1, pitch: 1 },
+    { id: 'sarcastic', label: 'Sarcastic', text: 'dry, sarcastic and teasing, but never mean', rate: 0.92, pitch: 0.8 },
+    { id: 'formal', label: 'Overly formal', text: 'extremely formal, stiff and polite, like a Victorian butler', rate: 0.85, pitch: 0.9 },
+    { id: 'enthusiastic', label: 'Hyper-enthusiastic', text: 'hyper-enthusiastic and excitable, full of energy and exclamation marks', rate: 1.15, pitch: 1.3 },
+    { id: 'grumpy', label: 'Grumpy', text: 'grumpy and impatient, but secretly helpful', rate: 0.95, pitch: 0.7 },
+    { id: 'calm', label: 'Calm and gentle', text: 'calm, slow and soothing', rate: 0.85, pitch: 1.0 }
+  ];
+  const TONE_VOICE = {};
+  NPC_TONES.forEach(t => { TONE_VOICE[t.id] = { rate: t.rate, pitch: t.pitch }; });
+
+  function validPixels(p){
+    if(!p || !Array.isArray(p.palette) || p.palette.length < 1 || p.palette.length > 8) return false;
+    if(!p.palette.every(c => typeof c === 'string' && /^#[0-9a-fA-F]{6}$/.test(c))) return false;
+    if(!Array.isArray(p.rows) || p.rows.length !== 8) return false;
+    return p.rows.every(r => typeof r === 'string' && r.length === 8 && Array.from(r).every(ch => ch === '.' || (/[0-9]/.test(ch) && Number(ch) < p.palette.length)));
+  }
+
+  const pixCache = {};
+  function pixelsToUrl(p){
+    const key = JSON.stringify(p);
+    if(pixCache[key]) return pixCache[key];
+    const cv = document.createElement('canvas');
+    cv.width = 64;
+    cv.height = 64;
+    const g = cv.getContext('2d');
+    p.rows.forEach((row, y) => Array.from(row).forEach((ch, x) => {
+      if(ch === '.') return;
+      g.fillStyle = p.palette[Number(ch)];
+      g.fillRect(x * 8, y * 8, 8, 8);
+    }));
+    pixCache[key] = cv.toDataURL();
+    return pixCache[key];
+  }
+
+  function readDraftObj(ov){
+    try {
+      const o = JSON.parse(ov.querySelector('#qb-text').value);
+      return (o && typeof o === 'object' && !Array.isArray(o)) ? o : null;
+    } catch(e){ return null; }
+  }
+
+  function patchDraft(ov, patch){
+    const o = readDraftObj(ov);
+    if(!o){
+      const m = ov.querySelector('#qb-msg');
+      m.className = 'qb-err';
+      m.textContent = 'Fix the JSON first, then use the persona tools.';
+      return false;
+    }
+    Object.keys(patch).forEach(k => { if(patch[k] === undefined) delete o[k]; else o[k] = patch[k]; });
+    const ta = ov.querySelector('#qb-text');
+    ta.value = JSON.stringify(o, null, 2);
+    qbDraft = ta.value;
+    return true;
+  }
+
+  function drawPersona(ov){
+    const box = ov.querySelector('#qb-persona');
+    if(!box) return;
+    const o = readDraftObj(ov) || {};
+    box.innerHTML = '<p class="shop-section-label" style="margin-top:12px;">NPC avatar</p><div class="chip-row" id="qb-av"></div><p class="shop-section-label">Voice personality</p><div class="chip-row" id="qb-tone" style="margin-bottom:12px;"></div>';
+    const av = box.querySelector('#qb-av');
+    if(validPixels(o.npcPixels)){
+      const img = document.createElement('img');
+      img.className = 'npc-pix';
+      img.style.width = '36px';
+      img.style.height = '36px';
+      img.alt = 'pixel avatar';
+      img.src = pixelsToUrl(o.npcPixels);
+      av.appendChild(img);
+    }
+    NPC_EMOJIS.forEach(e => {
+      const c = document.createElement('div');
+      c.className = 'chip' + (o.npcAvatar === e && !o.npcPixels ? ' active' : '');
+      c.textContent = e;
+      c.addEventListener('click', () => { if(patchDraft(ov, { npcAvatar: e, npcPixels: undefined })) drawPersona(ov); });
+      av.appendChild(c);
+    });
+    const gen = document.createElement('div');
+    gen.className = 'chip';
+    gen.textContent = '\u2728 Draw pixel art';
+    gen.addEventListener('click', () => generatePixelAvatar(ov));
+    av.appendChild(gen);
+    const tn = box.querySelector('#qb-tone');
+    NPC_TONES.forEach(t => {
+      const c = document.createElement('div');
+      c.className = 'chip' + (o.npcTone === t.id ? ' active' : '');
+      c.textContent = t.label;
+      c.addEventListener('click', () => { if(patchDraft(ov, { npcTone: o.npcTone === t.id ? undefined : t.id })) drawPersona(ov); });
+      tn.appendChild(c);
+    });
+  }
+
+  async function generatePixelAvatar(ov){
+    const o = readDraftObj(ov);
+    const msg = ov.querySelector('#qb-msg');
+    if(!o){ msg.className = 'qb-err'; msg.textContent = 'Fix the JSON first, then draw an avatar.'; return; }
+    msg.className = 'qb-ok';
+    msg.innerHTML = '<span class="spinner"></span>Drawing a pixel avatar\u2026';
+    const system = `You design 8x8 pixel-art character portraits. Draw an avatar for this NPC: name "${String(o.npcName || 'NPC').slice(0, 40)}", persona "${String(o.persona || '').slice(0, 200)}". Use a palette of 3 to 6 hex colors in the form #rrggbb. "rows" must be exactly 8 strings of exactly 8 characters; each character is a palette index (0-5) or "." for transparent. Make a recognizable face or figure. Respond ONLY with JSON, no markdown fences: {"palette": ["#rrggbb"], "rows": ["........"]}`;
+    try {
+      const r = await callClaudeJSON(system, [{ role: 'user', content: 'Draw the avatar.' }]);
+      const px = r ? { palette: r.palette, rows: r.rows } : null;
+      if(!px || !validPixels(px)) throw new Error('bad pixels');
+      if(patchDraft(ov, { npcPixels: px })){
+        msg.textContent = 'Pixel avatar ready.';
+        drawPersona(ov);
+      }
+    } catch(e){
+      msg.className = 'qb-err';
+      msg.textContent = 'Could not draw an avatar this time. Try again.';
+    }
+  }
+
   // ---------- Quest Builder (custom scenarios) ----------
   const QB_TEMPLATE = JSON.stringify({
     level: 'beginner',
     title: 'Returning a Jacket',
     summary: 'Return a jacket and ask for a refund.',
     npcName: 'Store Clerk Jo',
+    npcAvatar: '🧑‍💼',
+    npcTone: 'formal',
     persona: 'Jo is polite but follows the store rules strictly.',
     scenario: 'The learner wants to return a jacket without a receipt.',
     intro: 'You are at the returns desk. Explain what you want to do.',
@@ -2327,7 +2448,11 @@ Respond ONLY with one JSON object, no markdown fences:
 
   function registerCustom(q, id){
     unregisterQuest(id);
-    registerQuest(Object.assign({}, q, { id: id, title: '✎ ' + q.title }));
+    const tone = NPC_TONES.find(t => t.id === q.npcTone);
+    const guide = ((q.extraGuidance || '') + (tone ? ' Speaking style: ' + tone.text + '.' : '')).trim();
+    registerQuest(Object.assign({}, q, { id: id, title: '✎ ' + q.title, extraGuidance: guide }));
+    const def = QUEST_DEFINITIONS[id];
+    if(def){ def.avatar = q.npcAvatar || ''; def.pixels = q.npcPixels || null; def.toneId = q.npcTone || ''; }
   }
 
   function validateQuestJSON(q){
@@ -2353,6 +2478,9 @@ Respond ONLY with one JSON object, no markdown fences:
         if(!o || typeof o.trigger !== 'string' || !o.trigger.trim()) errs.push(n + '"trigger" is required.');
       });
     }
+    if(q.npcAvatar && (typeof q.npcAvatar !== 'string' || q.npcAvatar.length > 12)) errs.push('"npcAvatar" must be a short emoji.');
+    if(q.npcTone && !NPC_TONES.some(t => t.id === q.npcTone)) errs.push('"npcTone" must be one of: ' + NPC_TONES.map(t => t.id).join(', ') + '.');
+    if(q.npcPixels && !validPixels(q.npcPixels)) errs.push('"npcPixels" is invalid (a palette plus 8 rows of 8 characters).');
     return errs;
   }
 
@@ -2395,13 +2523,15 @@ Respond ONLY with one JSON object, no markdown fences:
     ov.innerHTML = '<div class="modal-card" style="max-width:520px;"><button class="modal-close" id="qb-close">✕</button>' +
       '<p class="modal-word" style="font-size:19px;">Quest Builder</p>' +
       '<p class="modal-pos" style="text-transform:none;">Write a scenario as JSON, test it, then save it to your quests.</p>' +
+      '<div id="qb-persona"></div>' +
       '<textarea id="qb-text" class="qb-text" spellcheck="false"></textarea>' +
       '<p id="qb-msg" class="qb-ok"></p>' +
       '<div class="pz-btns" style="margin-top:10px;" id="qb-btns"></div>' +
       '<p class="shop-section-label" style="margin-top:16px;">My quests</p><div id="qb-list"></div></div>';
     const ta = ov.querySelector('#qb-text');
     ta.value = qbDraft;
-    ta.addEventListener('input', () => { qbDraft = ta.value; });
+    drawPersona(ov);
+    ta.addEventListener('input', () => { qbDraft = ta.value; drawPersona(ov); });
     ov.querySelector('#qb-close').addEventListener('click', () => ov.classList.remove('show'));
     const btns = ov.querySelector('#qb-btns');
     const add = (label, fn, cls) => {
@@ -2437,7 +2567,10 @@ Respond ONLY with one JSON object, no markdown fences:
         skills: Array.isArray(q.skills) ? q.skills.filter(s => typeof s === 'string').slice(0, 5) : [],
         npcName: q.npcName, persona: q.persona, scenario: q.scenario, intro: q.intro,
         objectives: q.objectives.map(o => ({ id: o.id, label: o.label, trigger: o.trigger })),
-        extraGuidance: typeof q.extraGuidance === 'string' ? q.extraGuidance.slice(0, 400) : ''
+        extraGuidance: typeof q.extraGuidance === 'string' ? q.extraGuidance.slice(0, 400) : '',
+        npcAvatar: typeof q.npcAvatar === 'string' ? q.npcAvatar : '',
+        npcTone: q.npcTone || '',
+        npcPixels: q.npcPixels || null
       };
       customQuests = customQuests.filter(c => c.id !== id);
       customQuests.push(clean);
@@ -2448,7 +2581,7 @@ Respond ONLY with one JSON object, no markdown fences:
       msg.className = 'qb-ok';
       msg.textContent = 'Saved! Find it under All Quests (' + LEVEL_LABELS[q.level] + ').';
     });
-    add('Reset template', () => { qbDraft = QB_TEMPLATE; ta.value = qbDraft; ov.querySelector('#qb-msg').textContent = ''; });
+    add('Reset template', () => { qbDraft = QB_TEMPLATE; ta.value = qbDraft; ov.querySelector('#qb-msg').textContent = ''; drawPersona(ov); });
     renderQbList(ov);
   }
 
@@ -2481,7 +2614,9 @@ Respond ONLY with one JSON object, no markdown fences:
     window.speechSynthesis.cancel();
     const u = new SpeechSynthesisUtterance(text);
     u.lang = LANG_TAGS[profile.language] || 'en-US';
-    u.rate = profile.level === 'beginner' ? 0.8 : 0.95;
+    const tv = (currentQuestDef && TONE_VOICE[currentQuestDef.toneId]) || null;
+    u.rate = tv ? tv.rate : (profile.level === 'beginner' ? 0.8 : 0.95);
+    u.pitch = tv ? tv.pitch : 1;
     window.speechSynthesis.speak(u);
   }
 
@@ -2705,6 +2840,7 @@ Respond ONLY with one JSON object, no markdown fences:
   let cloudTimer = null;
   let cloudFailed = false;
   let resetting = false;
+  let aiAvailable = true;
   let unlockedBadges = {};
   let daily = { date: '', progress: {}, claimed: {} };
   let savedPhrases = [];
@@ -3889,6 +4025,7 @@ Respond ONLY with a single JSON object, no markdown fences, no extra text, in ex
     try {
       const user = await claude.use('user');
       const db = await claude.use('db');
+      try { aiAvailable = !!(await claude.use('sample')); } catch(e){ aiAvailable = false; }
       if(user && db){
         const uid = await user.id();
         if(uid){
@@ -3946,6 +4083,12 @@ Respond ONLY with a single JSON object, no markdown fences, no extra text, in ex
   }
 
   function renderAccountBadge(){
+    renderAccountBadgeBase();
+    const el = document.getElementById('acct-line');
+    if(el && !aiAvailable) el.textContent += ' · AI chat needs a Claude account: open this link in claude.ai while signed in.';
+  }
+
+  function renderAccountBadgeBase(){
     const el = document.getElementById('acct-line');
     if(!el) return;
     if(cloudUid){
@@ -4103,7 +4246,7 @@ Respond ONLY with a single JSON object, no markdown fences, no extra text, in ex
         renderLessonContent(data);
       })
       .catch(err => {
-        showRetry(lessonBody, err && err.message === 'timeout' ? 'The lesson is taking too long.' : 'Couldn’t build this lesson.', () => openGrammarLesson(id));
+        showRetry(lessonBody, aiErrorText(err), () => openGrammarLesson(id));
         console.error(err);
       });
   }
@@ -4321,7 +4464,7 @@ Respond ONLY with a single JSON object, no markdown fences, no extra text, in ex
       div.textContent = text;
     } else if(role === 'npc'){
       div.className = 'msg npc';
-      div.innerHTML = `<span class="npc-name">${opts.npcName || ''}</span>${wrapWords(escapeHtml(text))}`;
+      div.innerHTML = `<span class="npc-name">${opts.pixels ? '<img class="npc-pix" alt="" src="' + pixelsToUrl(opts.pixels) + '"> ' : (opts.avatar ? escapeHtml(opts.avatar) + ' ' : '')}${opts.npcName || ''}</span>${wrapWords(escapeHtml(text))}`;
       div.appendChild(makeSpeakButton(text));
     } else {
       div.className = 'msg user';
@@ -4358,7 +4501,15 @@ Respond ONLY with a single JSON object, no markdown fences, no extra text, in ex
   // ---------- Claude API ----------
 
   const SPINNER = '<span class="spinner"></span>';
-  const AI_TIMEOUT_MS = 30000;
+  const AI_TIMEOUT_MS = 60000;
+
+  function aiErrorText(err){
+    const code = err && err.code;
+    if(err && err.message === 'timeout') return 'The AI is taking too long.';
+    if(code === 'not_granted' || code === 'unavailable') return 'The AI needs your permission. Allow it when asked (it uses your own Claude account), or open this page in claude.ai while signed in.';
+    if(code === 'rate_limited') return 'Too many requests at once. Wait a moment, then retry.';
+    return 'Couldn’t reach the AI.';
+  }
 
   function showRetry(container, msg, onRetry){
     container.innerHTML = `<p class="modal-loading">${msg} <button class="retry-btn" type="button">↻ Retry</button></p>`;
@@ -4376,13 +4527,13 @@ Respond ONLY with a single JSON object, no markdown fences, no extra text, in ex
 
   async function callClaudeJSON(system, messages){
     const sample = await claude.use("sample");
-    if(!sample) throw new Error('AI not available');
+    if(!sample){ const er = new Error('AI not available'); er.code = 'unavailable'; throw er; }
     const turns = messages.map((m, i) => ({
       role: m.role,
       content: i === 0 ? system + "\n\n---\n\n" + m.content : m.content
     }));
     const out = await Promise.race([
-      sample(turns, { cache: false }),
+      sample(turns, { cache: false, modelTier: 'quick' }).catch(e => { const er = new Error((e && e.message) || 'AI error'); er.code = e && e.code; throw er; }),
       new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), AI_TIMEOUT_MS))
     ]);
     let raw = (out && out.text) ? out.text : '{}';
@@ -4428,7 +4579,7 @@ Respond ONLY with a single JSON object, no markdown fences, no extra text, in ex
     try {
       const result = await sendToQuestNPC(text);
       removeTyping();
-      addMessage('npc', result.reply || "…", { npcName: currentQuestDef.npcName });
+      addMessage('npc', result.reply || "…", { npcName: currentQuestDef.npcName, avatar: currentQuestDef.avatar, pixels: currentQuestDef.pixels });
 
       if(result.recast && result.recast.trim() && result.recast.trim().toLowerCase() !== text.toLowerCase()){
         const note = document.createElement('div');
@@ -4518,7 +4669,7 @@ Respond ONLY with a single JSON object, no markdown fences, no extra text, in ex
     } catch(err){
       removeTyping();
       if(history.length && history[history.length - 1].role === 'user') history.pop();
-      addRetryRow(err && err.message === 'timeout' ? 'The reply is taking too long.' : 'Couldn’t reach the AI.', () => { userDiv.remove(); input.value = text; handleSend(); });
+      addRetryRow(aiErrorText(err), () => { userDiv.remove(); input.value = text; handleSend(); });
       console.error(err);
     } finally {
       sendBtn.disabled = false;
@@ -4575,7 +4726,7 @@ Respond ONLY with a single JSON object, no markdown fences, in exactly this shap
         <p style="font-size:11px; color:var(--text-dim); margin-top:10px;">✓ Saved to your review queue (${savedWords.length} word${savedWords.length === 1 ? '' : 's'} saved)</p>
       `;
     } catch(err){
-      showRetry(modalBody, err && err.message === 'timeout' ? 'That took too long.' : 'Something went wrong looking that up.', () => lookupWord(word));
+      showRetry(modalBody, aiErrorText(err), () => lookupWord(word));
       console.error(err);
     }
   }
