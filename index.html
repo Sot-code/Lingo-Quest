@@ -1950,6 +1950,7 @@ Respond ONLY with one JSON object, no markdown fences:
     daily.progress[key] = (daily.progress[key] || 0) + n;
     settleDaily();
     checkBadges();
+    flushAnalytics();
   }
 
   function settleDaily(){
@@ -2422,6 +2423,110 @@ Respond ONLY with one JSON object, no markdown fences:
     }
   }
 
+  // ---------- Anonymous usage analytics: one record per visitor (no names or emails) ----------
+  const an = { doc: null, sessionSeconds: 0, lastTick: Date.now(), lastAct: Date.now(), lastFlush: 0, ticks: 0, disabled: false };
+  ['pointerdown', 'keydown', 'scroll', 'touchstart'].forEach(ev => window.addEventListener(ev, () => { an.lastAct = Date.now(); }, { passive: true }));
+
+  async function startAnalytics(){
+    if(!cloudDb || !cloudUid || an.doc) return;
+    const ref = cloudDb.doc('analytics/' + cloudUid);
+    try {
+      const snap = await ref.get();
+      const d = snap.exists ? (snap.data() || {}) : {};
+      const now = Date.now();
+      an.doc = { firstSeen: d.firstSeen || now, lastSeen: now, visits: (Number(d.visits) || 0) + 1, totalSeconds: Number(d.totalSeconds) || 0, longestSession: Number(d.longestSession) || 0 };
+      an.lastTick = now;
+      await ref.set(an.doc);   // the first write also shows whether this viewer is allowed to write
+    } catch(e){ an.disabled = true; an.doc = null; return; }
+    setInterval(tickAnalytics, 15000);
+    document.addEventListener('visibilitychange', () => { if(document.hidden) flushAnalytics(true); });
+  }
+
+  function tickAnalytics(){
+    if(an.disabled || !an.doc) return;
+    const now = Date.now();
+    if(!document.hidden && (now - an.lastAct) < 60000){
+      const s = Math.min(15, Math.round((now - an.lastTick) / 1000));
+      an.doc.totalSeconds += s;
+      an.sessionSeconds += s;
+      if(an.sessionSeconds > an.doc.longestSession) an.doc.longestSession = an.sessionSeconds;
+    }
+    an.lastTick = now;
+    an.ticks += 1;
+    if(an.ticks % 4 === 0) flushAnalytics(true);
+  }
+
+  async function flushAnalytics(force){
+    if(an.disabled || !an.doc || !cloudDb || !cloudUid) return;
+    const now = Date.now();
+    if(!force && now - an.lastFlush < 20000) return;
+    an.lastFlush = now;
+    const d = an.doc;
+    d.lastSeen = now;
+    d.quests = stats.quests || 0;
+    d.questsDistinct = completedQuestIds.size;
+    d.lessons = stats.lessons || 0;
+    d.bossWins = Object.keys(stats).filter(k => k.indexOf('boss_') === 0).length;
+    d.level = profile.level || '';
+    d.language = profile.language || '';
+    try { await cloudDb.doc('analytics/' + cloudUid).set(d); } catch(e){ an.disabled = true; }
+  }
+
+  function fmtDur(s){
+    s = Math.round(s || 0);
+    if(s < 60) return s + 's';
+    if(s < 3600) return Math.round(s / 60) + 'm';
+    return Math.floor(s / 3600) + 'h ' + Math.round((s % 3600) / 60) + 'm';
+  }
+
+  function setupOwnerPanel(){
+    if(!isOwnerView || !cloudDb || document.getElementById('analytics-btn')) return;
+    const stats$ = document.querySelector('#home-screen .home-stats');
+    if(!stats$) return;
+    const b = document.createElement('span');
+    b.className = 'shop-btn';
+    b.id = 'analytics-btn';
+    b.textContent = '📊 Analytics';
+    b.addEventListener('click', openAnalytics);
+    stats$.appendChild(b);
+  }
+
+  async function openAnalytics(){
+    let ov = document.getElementById('analytics-overlay');
+    if(!ov){
+      ov = document.createElement('div');
+      ov.id = 'analytics-overlay';
+      ov.className = 'modal-overlay';
+      document.getElementById('quest-root').appendChild(ov);
+    }
+    ov.innerHTML = '<div class="modal-card" style="max-width:460px;"><button class="modal-close" id="an-close">✕</button><div id="an-body"><p class="modal-loading"><span class="spinner"></span>Loading…</p></div></div>';
+    ov.classList.add('show');
+    ov.querySelector('#an-close').addEventListener('click', () => ov.classList.remove('show'));
+    const body = ov.querySelector('#an-body');
+    try {
+      const snap = await cloudDb.collection('analytics').limit(1000).get();
+      const rows = snap.docs.map(d => d.data() || {});
+      const now = Date.now();
+      const sum = k => rows.reduce((a, r) => a + (Number(r[k]) || 0), 0);
+      const week = rows.filter(r => now - (Number(r.lastSeen) || 0) < 7 * 864e5).length;
+      const tile = (label, value) => '<div class="cs-stat"><p class="cs-stat-label">' + label + '</p><p class="cs-stat-value">' + value + '</p></div>';
+      let html = '<p class="modal-word" style="font-size:19px;">Usage analytics</p>' +
+        '<p class="modal-pos" style="text-transform:none;">Anonymous. Counts visitors who were signed in with Contributor access or higher.</p>' +
+        '<div class="cs-stat-grid">' +
+        tile('Visitors', rows.length) + tile('Active last 7 days', week) +
+        tile('Total visits', sum('visits')) + tile('Avg time / visitor', fmtDur(rows.length ? sum('totalSeconds') / rows.length : 0)) +
+        tile('Quests completed', sum('quests')) + tile('Lessons completed', sum('lessons')) +
+        '</div><p class="shop-section-label" style="margin-top:14px;">Top visitors by time</p>';
+      rows.slice().sort((a, b) => (b.totalSeconds || 0) - (a.totalSeconds || 0)).slice(0, 10).forEach((r, i) => {
+        const ago = Math.max(0, Math.round((now - (Number(r.lastSeen) || now)) / 864e5));
+        html += '<div class="word-list-item"><div class="wl-info"><div class="wl-word">Visitor ' + (i + 1) + ' · ' + fmtDur(r.totalSeconds) + '</div><div class="wl-def">' + (r.quests || 0) + ' quests · ' + (r.lessons || 0) + ' lessons · ' + (r.visits || 1) + ' visits · last seen ' + (ago ? ago + 'd ago' : 'today') + '</div></div></div>';
+      });
+      body.innerHTML = html;
+    } catch(e){
+      body.innerHTML = '<p class="modal-loading">Could not load the analytics.</p>';
+    }
+  }
+
   // ---------- Quest Builder (custom scenarios) ----------
   const QB_TEMPLATE = JSON.stringify({
     level: 'beginner',
@@ -2841,6 +2946,7 @@ Respond ONLY with one JSON object, no markdown fences:
   let cloudFailed = false;
   let resetting = false;
   let aiAvailable = true;
+  let isOwnerView = false;
   let unlockedBadges = {};
   let daily = { date: '', progress: {}, claimed: {} };
   let savedPhrases = [];
@@ -4033,6 +4139,7 @@ Respond ONLY with a single JSON object, no markdown fences, no extra text, in ex
           cloudUid = uid;
           SAVE_KEY = 'lingoquest_progress_v1_' + uid;
           try { const me = await user.me(); cloudName = (me && me.name) || ''; } catch(e){}
+          try { isOwnerView = !!(await user.isOwner()); } catch(e){}
         }
       }
     } catch(e){}
@@ -4050,6 +4157,8 @@ Respond ONLY with a single JSON object, no markdown fences, no extra text, in ex
     } catch(e){}
     if(!profile.name && loadProgress()) launchHome();
     await pullCloud();
+    startAnalytics();
+    setupOwnerPanel();
   }
 
   async function pullCloud(){
@@ -4086,6 +4195,7 @@ Respond ONLY with a single JSON object, no markdown fences, no extra text, in ex
     renderAccountBadgeBase();
     const el = document.getElementById('acct-line');
     if(el && !aiAvailable) el.textContent += ' · AI chat needs a Claude account: open this link in claude.ai while signed in.';
+    if(el && cloudUid && !isOwnerView) el.textContent += ' · Anonymous usage stats (visits, time, quests done) are shared with the app owner.';
   }
 
   function renderAccountBadgeBase(){
