@@ -4618,7 +4618,13 @@ Respond ONLY with a single JSON object, no markdown fences, no extra text, in ex
     if(err && err.message === 'timeout') return 'The AI is taking too long.';
     if(code === 'not_granted' || code === 'unavailable') return 'The AI needs your permission. Allow it when asked (it uses your own Claude account), or open this page in claude.ai while signed in.';
     if(code === 'rate_limited') return 'Too many requests at once. Wait a moment, then retry.';
-    return 'Couldn’t reach the AI.';
+    const tag = ' [' + (code || (err && err.name) || 'error') + ']';
+    if(code === 'sampling_disabled') return 'Claude is turned off for this account or organization (for example a school or work account). Try a personal account.' + tag;
+    if(code === 'session_expired') return 'Please sign in to claude.ai again, then reload this page.' + tag;
+    if(code === 'upstream_error') return 'The AI had a temporary problem. Please try again.' + tag;
+    if(code === 'invalid_request' || code === 'prompt_too_large') return 'The AI could not accept this request: ' + ((err && err.message) || '') + tag;
+    if(code === 'capability_disabled' || code === 'capability_removed' || code === 'not_declared') return 'The AI is not available in this view.' + tag;
+    return 'Couldn’t reach the AI.' + tag;
   }
 
   function showRetry(container, msg, onRetry){
@@ -4643,7 +4649,7 @@ Respond ONLY with a single JSON object, no markdown fences, no extra text, in ex
       content: i === 0 ? system + "\n\n---\n\n" + m.content : m.content
     }));
     const out = await Promise.race([
-      sample(turns, { cache: false, modelTier: 'quick' }).catch(e => { const er = new Error((e && e.message) || 'AI error'); er.code = e && e.code; throw er; }),
+      sample(turns, { cache: false }).catch(e => { const er = new Error((e && e.message) || 'AI error'); er.code = e && e.code; throw er; }),
       new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), AI_TIMEOUT_MS))
     ]);
     let raw = (out && out.text) ? out.text : '{}';
