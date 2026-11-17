@@ -4635,35 +4635,23 @@ Respond ONLY with a single JSON object, no markdown fences, no extra text, in ex
     log.scrollTop = log.scrollHeight;
   }
 
- async function callClaudeJSON(system, messages){
-    const allMessages = [
-      { role: "system", content: system },
-      ...messages
-    ];
-
-    const response = await fetch("/api/chat", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ messages: allMessages })
-    });
-
-    if (!response.ok) {
-      const errText = await response.text();
-      throw new Error(`API error: ${response.status} ${errText}`);
-    }
-
-    const data = await response.json();
-    const rawText = data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content;
-    
-    if (!rawText) {
-      throw new Error('Invalid response from AI');
-    }
-
-    let cleaned = rawText.trim().replace(/^```json\s*/i, '').replace(/^```\s*/, '').replace(/```$/, '');
+  async function callClaudeJSON(system, messages){
+    const sample = await claude.use("sample");
+    if(!sample){ const er = new Error('AI not available'); er.code = 'unavailable'; throw er; }
+    const turns = messages.map((m, i) => ({
+      role: m.role,
+      content: i === 0 ? system + "\n\n---\n\n" + m.content : m.content
+    }));
+    const out = await Promise.race([
+      sample(turns, { cache: false, modelTier: 'quick' }).catch(e => { const er = new Error((e && e.message) || 'AI error'); er.code = e && e.code; throw er; }),
+      new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), AI_TIMEOUT_MS))
+    ]);
+    let raw = (out && out.text) ? out.text : '{}';
+    raw = raw.trim().replace(/^```json\s*/i, '').replace(/^```\s*/, '').replace(/```$/, '');
     try {
-      return JSON.parse(cleaned);
-    } catch(e) {
-      return { reply: rawText, objectives: {}, questComplete: false, feedback: "", accuracy: 0, recast: null };
+      return JSON.parse(raw);
+    } catch(e){
+      return null;
     }
   }
 
